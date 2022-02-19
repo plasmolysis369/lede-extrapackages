@@ -48,6 +48,7 @@ svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/
 mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/hysteria openwrt-passwall/luci-app-passwall openwrt-passwall/trojan-go openwrt-passwall/trojan-plus ./
 rm -Rf openwrt-passwall
 mv -n helloworld/* ./ ; rm -rf helloworld
+mv -n mypackages/* ./ ; rm -rf mypackages
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
 rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
