@@ -21,74 +21,80 @@
  
  ## 插件功能说明
 
-luci-app-advanced               可以在luci直接编译配置文件，管理其他本地文件文件
+luci-app-advanced---------------可以在luci直接编译配置文件，管理其他本地文件文件
 
-luci-app-argonne-config         给argonne配置bing图片和自定义图片
+luci-app-argonne-config---------给argonne配置bing图片和自定义图片
 
-luci-theme-argonne              jerrykuku的argon主题，修改名称不会与lede仓库自带的argon冲突
+luci-theme-argonne--------------jerrykuku的argon主题，修改名称不会与lede仓库自带的argon冲突
 
-luci-app-autoipsetadder         通过httping探测自动将ip加入ipset
+luci-app-autoipsetadder---------通过httping探测自动将ip加入ipset
 
-luci-app-beardropper            抵御ssh爆破攻击
+luci-app-beardropper------------抵御ssh爆破攻击
 
+luci-app-control-speedlimit-----对用户进行访问控制和限速
 
+luci-app-control-webrestriction-黑白名单
 
-luci-app-ddnsto                 ddnsto内网穿透，易有云出品
+luci-app-control-timewol--------定时唤醒
 
-luci-app-dnsfilter              基于DNS的广告过滤
+luci-app-control-weburl---------网址过滤
 
-luci-app-easyupdate             搭配github工作流自动编译可以自动升级你的系统（慎用）
+luci-app-ddnsto-----------------ddnsto内网穿透，易有云出品
 
-luci-app-iperf                  给iperf3提供luci界面
+luci-app-dnsfilter--------------基于DNS的广告过滤
 
-luci-app-iptvhelper             字面意思
+luci-app-easyupdate-------------搭配github工作流自动编译可以自动升级你的系统（慎用）
 
-luci-app-jd-dailybonus          jd自动签到脚本
+luci-app-iperf------------------给iperf3提供luci界面
 
-luci-app-linkease               易有云个人网盘openwrt端
+luci-app-iptvhelper-------------字面意思
 
-luci-app-mentohust              锐捷网页认证插件的luci界面，同时选定mentohust软件包后才会生效
+luci-app-jd-dailybonus----------jd自动签到脚本
 
-luci-app-minieap                802.11x验证插件的luci界面，同时选定minieap软件包后才会生效
+luci-app-linkease---------------易有云个人网盘openwrt端
 
-luci-app-mosdns                 DNS转发器
+luci-app-mentohust--------------锐捷网页认证插件的luci界面，同时选定mentohust软件包后才会生效
 
-luci-app-netspeedtest           字面意思，可能会有bug
+luci-app-minieap----------------802.11x验证插件的luci界面，同时选定minieap软件包后才会生效
 
-luci-app-nginx-manager          openwrt上nginx的luci的管理界面，会替代默认的uhttpd
+luci-app-mosdns-----------------DNS转发器
 
-luci-app-oaf                    openwrt上的应用过滤插件，支持游戏、视频、聊天、下载等app过滤
+luci-app-netspeedtest-----------字面意思，可能会有bug
 
-luci-app-ssr-plus               helloworld
+luci-app-nginx-manager----------openwrt上nginx的luci的管理界面，会替代默认的uhttpd
 
-luci-app-openclash              helloworld
+luci-app-oaf--------------------openwrt上的应用过滤插件，支持游戏、视频、聊天、下载等app过滤
 
-luci-app-passwall               helloworld
+luci-app-ssr-plus---------------helloworld
 
-luci-app-vssr                   helloworld
+luci-app-openclash--------------helloworld
 
-luci-app-smartdns               不太smart的dns
+luci-app-passwall---------------helloworld
 
-luci-app-sms-tool               发短信的luci界面，需要蜂窝网模块和sim卡才能使用
+luci-app-vssr-------------------helloworld
 
-luci-app-socat                  socat瑞士军刀的luci操作界面
+luci-app-smartdns---------------不太smart的dns
 
-luci-app-supervisord            一款面向Luci的简单的任务管理器
+luci-app-sms-tool---------------发短信的luci界面，需要蜂窝网模块和sim卡才能使用
 
-luci-app-sysuh3c                H3C 802.1X的认证客户端
+luci-app-socat------------------socat瑞士军刀的luci操作界面
 
-luci-app-tcpdump                tcpdump抓包的luci操作界面
+luci-app-supervisord------------一款面向Luci的简单的任务管理器
 
-luci-app-tencentcloud-cos       腾讯云对象存储插件
+luci-app-sysuh3c----------------H3C 802.1X的认证客户端
 
-luci-app-ttnode                 甜糖星愿自动采集插件，并不是挖星愿
+luci-app-tcpdump----------------tcpdump抓包的luci操作界面
 
-luci-app-udp2raw                udp2raw隧道的luci操作界面
+luci-app-tencentcloud-cos-------腾讯云对象存储插件
 
-luci-app-xunlei                 迅雷远程下载
+luci-app-ttnode-----------------甜糖星愿自动采集插件，并不是挖星愿
 
-luci-theme-atmaterial_new       修改版tomato主题
+luci-app-udp2raw----------------udp2raw隧道的luci操作界面
 
-luci-theme-tomato               tomato主题
+luci-app-xunlei-----------------迅雷远程下载
 
-luci-theme-mcat                 tomcat主题
+luci-theme-atmaterial_new-------修改版tomato主题
+
+luci-theme-tomato---------------tomato主题
+
+luci-theme-mcat-----------------tomcat主题
