@@ -4,7 +4,6 @@ mv -n `find $1/* -maxdepth 0 -type d` ./
 rm -rf $1
 }
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
-git clone --depth 1 https://github.com/kiddin9/autoshare && mvdir autoshare
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall
 git clone --depth 1 https://github.com/BoringCat/luci-app-mentohust
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
@@ -31,7 +30,6 @@ git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mo
 git clone -b lede https://github.com/pymumu/luci-app-smartdns
 git clone https://github.com/KFERMercer/luci-app-tcpdump
 
-svn co https://github.com/Lienol/openwrt-package/branches/other/lean/luci-app-autoreboot
 svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
