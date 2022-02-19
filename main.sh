@@ -10,8 +10,6 @@ git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
 git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
 git clone --depth 1 https://github.com/BoringCat/luci-app-minieap
-git clone --depth 1 https://github.com/rufengsuixing/luci-app-onliner
-git clone --depth 1 https://github.com/tty228/luci-app-serverchan
 git clone --depth 1 https://github.com/4IceG/luci-app-sms-tool smstool && mvdir smstool
 git clone --depth 1 https://github.com/silime/luci-app-xunlei
 git clone --depth 1 https://github.com/ysc3839/luci-proto-minieap
@@ -48,6 +46,7 @@ svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/
 
 mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/hysteria openwrt-passwall/luci-app-passwall openwrt-passwall/trojan-go openwrt-passwall/trojan-plus ./
 rm -Rf openwrt-passwall
+mv -n helloworld/* ./ ; rm -rf helloworld
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
 rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
