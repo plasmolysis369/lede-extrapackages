@@ -28,10 +28,10 @@ git clone --depth 1 https://github.com/kenzok78/luci-theme-argonne
 git clone --depth 1 https://github.com/kenzok78/luci-app-argonne-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
+git clone --depth 1 https://github.com/fw876/helloworld
 git clone -b lede https://github.com/pymumu/luci-app-smartdns
 git clone https://github.com/KFERMercer/luci-app-tcpdump
 
-svn co https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
