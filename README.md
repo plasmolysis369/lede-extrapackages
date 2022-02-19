@@ -31,15 +31,19 @@ luci-app-autoipsetadder         通过httping探测自动将ip加入ipset
 
 luci-app-beardropper            抵御ssh爆破攻击
 
+
+
 luci-app-ddnsto                 ddnsto内网穿透，易有云出品
 
 luci-app-dnsfilter              基于DNS的广告过滤
 
-
 luci-app-easyupdate             搭配github工作流自动编译可以自动升级你的系统（慎用）
+
 luci-app-iperf                  给iperf3提供luci界面
 
 luci-app-iptvhelper             字面意思
+
+luci-app-jd-dailybonus          jd自动签到脚本
 
 luci-app-linkease               易有云个人网盘openwrt端
 
@@ -66,6 +70,8 @@ luci-app-vssr                   helloworld
 luci-app-smartdns               不太smart的dns
 
 luci-app-sms-tool               发短信的luci界面，需要蜂窝网模块和sim卡才能使用
+
+luci-app-socat                  socat瑞士军刀的luci操作界面
 
 luci-app-supervisord            一款面向Luci的简单的任务管理器
 
