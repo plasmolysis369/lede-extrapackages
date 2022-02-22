@@ -23,9 +23,9 @@
 
 luci-app-advanced---------------可以在luci直接编译配置文件，管理其他本地文件文件
 
-luci-app-argonne-config---------给argonne配置bing图片和自定义图片
+luci-app-argon-config---------给argonne配置bing图片和自定义图片
 
-luci-theme-argonne--------------jerrykuku的argon主题，修改名称不会与lede仓库自带的argon冲突
+luci-theme-argon--------------jerrykuku的argon主题
 
 luci-app-autoipsetadder---------通过httping探测自动将ip加入ipset
 
