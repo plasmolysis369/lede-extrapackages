@@ -7,7 +7,6 @@ git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
 git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall
 git clone --depth 1 https://github.com/BoringCat/luci-app-mentohust
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
-git clone --depth 1 https://github.com/NateLol/luci-app-beardropper
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
 git clone --depth 1 https://github.com/BoringCat/luci-app-minieap
 git clone --depth 1 https://github.com/4IceG/luci-app-sms-tool smstool && mvdir smstool
