@@ -34,9 +34,6 @@ svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
-
-svn co https://github.com/linkease/istore/trunk/luci/luci-app-store
-svn co https://github.com/linkease/istore-ui/trunk/app-store-ui
 svn co https://github.com/linkease/nas-packages/trunk/network/services && mvdir services
 svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
