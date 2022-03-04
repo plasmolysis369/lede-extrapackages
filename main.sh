@@ -4,7 +4,7 @@ mv -n `find $1/* -maxdepth 0 -type d` ./
 rm -rf $1
 }
 git clone --depth 1 https://github.com/kiddin9/luci-app-dnsfilter
-git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall
+git clone --depth 1 https://github.com/plasmolysis369/openwrt-passwall
 git clone --depth 1 https://github.com/BoringCat/luci-app-mentohust
 git clone --depth 1 https://github.com/rufengsuixing/luci-app-autoipsetadder
 git clone --depth 1 https://github.com/riverscn/openwrt-iptvhelper && mvdir openwrt-iptvhelper
@@ -40,7 +40,7 @@ svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 
-mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/hysteria openwrt-passwall/v2ray-geodata openwrt-passwall/luci-app-passwall openwrt-passwall/trojan-go openwrt-passwall/trojan-plus ./
+mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/hysteria openwrt-passwall/v2ray-ext-geodata openwrt-passwall/luci-app-passwall openwrt-passwall/trojan-go openwrt-passwall/trojan-plus ./
 rm -Rf openwrt-passwall
 mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n mypackages/* ./ ; rm -rf mypackages
