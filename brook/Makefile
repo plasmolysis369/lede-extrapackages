@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=brook
-PKG_VERSION:=20220404
+PKG_VERSION:=20210701
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/txthinking/brook/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a119adf673df8f61fcaec841e471392cfdd9d307fe52ec9d6b3d9393846a7630
+PKG_HASH:=92c2253349af05ea5aa7a45cddd39ca638c732b2ffdb5066a5f03d2df40cb0b5
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=GPL-3.0
@@ -58,7 +58,7 @@ endef
 
 ifeq ($(CONFIG_BROOK_COMPRESS_GOPROXY),y)
 	export GO111MODULE=on
-	export GOPROXY=https://goproxy.bj.bcebos.com
+	export GOPROXY=https://goproxy.baidu.com
 endif
 
 define Build/Compile
