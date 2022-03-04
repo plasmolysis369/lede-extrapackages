@@ -40,7 +40,7 @@ svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 
-mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/hysteria openwrt-passwall/luci-app-passwall openwrt-passwall/trojan-go openwrt-passwall/trojan-plus ./
+mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/hysteria openwrt-passwall/v2ray-geodata openwrt-passwall/luci-app-passwall openwrt-passwall/trojan-go openwrt-passwall/trojan-plus ./
 rm -Rf openwrt-passwall
 mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n mypackages/* ./ ; rm -rf mypackages
