@@ -69,13 +69,9 @@ luci-app-ssr-plus---------------helloworld
 
 luci-app-openclash--------------helloworld
 
-luci-app-passwall---------------helloworld
-
 luci-app-vssr-------------------helloworld
 
 luci-app-smartdns---------------不太smart的dns
-
-luci-app-sms-tool---------------发短信的luci界面，需要蜂窝网模块和sim卡才能使用
 
 luci-app-socat------------------socat瑞士军刀的luci操作界面
 
