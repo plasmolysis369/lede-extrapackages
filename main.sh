@@ -37,7 +37,6 @@ svn co https://github.com/linkease/nas-packages/trunk/network/services && mvdir 
 svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
-svn co https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos/trunk/tencentcloud_cos luci-app-tencentcloud-cos
 
 mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n mypackages/* ./ ; rm -rf mypackages
