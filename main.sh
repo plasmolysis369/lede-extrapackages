@@ -26,6 +26,7 @@ git clone --depth 1 https://github.com/fw876/helloworld
 git clone -b lede https://github.com/pymumu/luci-app-smartdns
 git clone https://github.com/KFERMercer/luci-app-tcpdump
 git clone https://github.com/plasmolysis369/mypackages
+git clone https://github.com/plasmolysis369/luci-app-store
 
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
