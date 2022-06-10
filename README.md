@@ -81,8 +81,6 @@ luci-app-sysuh3c----------------H3C 802.1X的认证客户端
 
 luci-app-tcpdump----------------tcpdump抓包的luci操作界面
 
-luci-app-tencentcloud-cos-------腾讯云对象存储插件
-
 luci-app-ttnode-----------------甜糖星愿自动采集插件，并不是挖星愿
 
 luci-app-udp2raw----------------udp2raw隧道的luci操作界面
