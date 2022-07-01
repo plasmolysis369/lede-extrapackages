@@ -21,7 +21,7 @@ git clone --depth 1 https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-
 git clone --depth 1 https://github.com/kenzok78/udp2raw
 git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
-git clone --depth 1 https://github.com/QiuSimons/openwrt-mos && mvdir openwrt-mos
+git clone --depth 1 https://github.com/QiuSimons/openwrt-mos
 git clone --depth 1 https://github.com/fw876/helloworld
 git clone -b lede https://github.com/pymumu/luci-app-smartdns
 git clone https://github.com/KFERMercer/luci-app-tcpdump
@@ -41,6 +41,7 @@ svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 
 mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n mypackages/* ./ ; rm -rf mypackages
+mv -n openwrt-mos/luci-app-mosdns ./ ; rm -rf openwrt-mos
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
 rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
