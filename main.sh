@@ -39,9 +39,11 @@ svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
 svn co https://github.com/linkease/nas-packages-luci/trunk/luci && mvdir luci
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 
+sed -i "s/mosdns-neo/mosdns/g" openwrt-mos/luci-app-mosdns
+mv -n openwrt-mos/luci-app-mosdns ./ ; rm -rf openwrt-mos
+
 mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n mypackages/* ./ ; rm -rf mypackages
-mv -n openwrt-mos/luci-app-mosdns ./ ; rm -rf openwrt-mos
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
 rm -rf ./*/.svn & rm -rf ./*/.github & rm -rf ./*/.gitignore
