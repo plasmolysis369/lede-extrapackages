@@ -47,7 +47,7 @@ mv -n openwrt-mos/luci-app-mosdns ./ ; rm -rf openwrt-mos
 mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n openwrt-passwall2/* ./ ; rm -rf openwrt-passwall2
 mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/dns2socks openwrt-passwall/ipt2socks openwrt-passwall/microsocks -t ./
-mv -n openwrt-passwall/ssocks  openwrt-passwall/pdnsd-alt -t ./ ; rm -rf openwrt-passwall
+mv -n openwrt-passwall/ssocks  openwrt-passwall/pdnsd-alt openwrt-passwall/trojan-go openwrt-passwall/trojan-plus -t ./ ; rm -rf openwrt-passwall
 mv -n mypackages/* ./ ; rm -rf mypackages
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
