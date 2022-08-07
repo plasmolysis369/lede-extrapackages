@@ -14,7 +14,7 @@
 
 ```Brach
     # 在feeds.conf.default加入
-    src-git extrapackages  https://github.com/plasmolysis369/lede-extrapackages.git
+    src-git extrapackages https://github.com/plasmolysis369/lede-extrapackages.git
 ``` 
  
  ## 插件功能说明
