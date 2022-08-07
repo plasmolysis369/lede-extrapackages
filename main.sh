@@ -30,7 +30,6 @@ git clone https://github.com/koshev-msk/luci-app-smstools3
 git clone https://github.com/linkease/istore
 git clone https://github.com/xiaorouji/openwrt-passwall
 git clone https://github.com/xiaorouji/openwrt-passwall2
-git clone https://github.com/sbwml/luci-app-alist
 
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
