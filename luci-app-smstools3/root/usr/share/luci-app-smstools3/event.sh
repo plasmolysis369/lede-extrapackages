@@ -10,14 +10,17 @@ LOG=$(uci -q get smstools3.@sms[0].loglevel)
 PIN=$(uci -q get smstools3.@sms[0].pin)
 LED_EN=$(uci -q get smstools3.@sms[0].led_enable)
 INIT_=$(uci -q get smstools3.@sms[0].init)
-NET_CHECK=$(uci -q get smstools3.@sms[0].net_check)
-SIG_CHECK=$(uci -q get smstools3.@sms[0].sig_check)
 
 if [ ! -d /root/sms ]; then
 	mkdir /root/sms
 	for d in checked failed incoming outgoing sent; do
 		mkdir /root/sms/${d}
 	done
+fi
+
+if [ ! -f /usr/share/luci-app-smstools3/smstools3.old.init ]; then
+	mv /etc/init.d/smstools3 /usr/share/luci-app-smstools3/smstools3.init.orig
+	cp /usr/share/luci-app-smstools3/smstools3 /etc/init.d/
 fi
 
 case $STORAGE in
@@ -58,14 +61,6 @@ case $INIT_ in
 esac
 echo $INIT_STRING
 echo "device = $DEVICE"
-case $SIG_CHECK in
-	1) echo "signal_quality_ber_ignore = yes" ;;
-esac
-case $NET_CHECK in
-	0) echo "check_network = 0" ;;
-	1) echo "check_network = 1" ;;
-	2) echo "check_network = 2" ;;
-esac
 if [ ! "$UI" ]; then
         echo -e "detect_unexpected_input = no"
 fi
