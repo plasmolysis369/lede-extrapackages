@@ -27,15 +27,15 @@ git clone https://github.com/KFERMercer/luci-app-tcpdump
 git clone https://github.com/plasmolysis369/mypackages
 git clone https://github.com/xiaorouji/openwrt-passwall
 git clone https://github.com/xiaorouji/openwrt-passwall2
+git clone https://github.com/sirpdboy/netspeedtest
+git clone https://github.com/linkease/nas-packages-luci
+git clone https://github.com/linkease/nas-packages
 
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
-svn co https://github.com/linkease/nas-packages/trunk/network/services/ddnsto && mvdir ddnsto
-#svn co https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
-svn co https://github.com/linkease/nas-packages-luci/trunk/luci/luci-app-ddnsto && mvdir luci-app-ddnsto
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 
 sed -i "s/mosdns-neo/mosdns/g" openwrt-mos/luci-app-mosdns/Makefile
@@ -45,6 +45,8 @@ mv -n helloworld/* ./ ; rm -rf helloworld
 mv -n openwrt-passwall2/* ./ ; rm -rf openwrt-passwall2
 mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/dns2socks openwrt-passwall/ipt2socks openwrt-passwall/microsocks -t ./
 mv -n openwrt-passwall/ssocks  openwrt-passwall/pdnsd-alt openwrt-passwall/trojan-go openwrt-passwall/trojan-plus -t ./ ; rm -rf openwrt-passwall
+mv -n nas-packages/network/services/ddnsto ./ ; rm -rf nas-packages
+mv -n nas-packages-luci/luci/luci-app-ddnsto ./ ; rm -rf nas-packages-luci
 mv -n mypackages/* ./ ; rm -rf mypackages
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
