@@ -39,9 +39,6 @@ svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
 svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 
-sed -i "s/mosdns-neo/mosdns/g" openwrt-mos/luci-app-mosdns/Makefile
-mv -n openwrt-mos/luci-app-mosdns ./ ; rm -rf openwrt-mos
-
 mv -n openwrt-passwall2/* ./ ; rm -rf openwrt-passwall2
 mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/dns2socks openwrt-passwall/ipt2socks openwrt-passwall/microsocks -t ./
 mv -n openwrt-passwall/ssocks  openwrt-passwall/pdnsd-alt openwrt-passwall/trojan-go openwrt-passwall/trojan-plus -t ./ ; rm -rf openwrt-passwall
