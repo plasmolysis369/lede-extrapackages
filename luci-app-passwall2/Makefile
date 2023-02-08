@@ -1,11 +1,11 @@
-# Copyright (C) 2022 xiaorouji
+# Copyright (C) 2022-2023 xiaorouji
 #
 # This is free software, licensed under the GNU General Public License v3.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall2
-PKG_VERSION:=1.5
+PKG_VERSION:=1.7
 PKG_RELEASE:=1
 
 PKG_CONFIG_DEPENDS:= \
