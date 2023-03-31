@@ -41,7 +41,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE
         chmod +x packages.sh
-        git clone -b packages https://github.com/plasmolysis369/lede-extrapackages.git packages
+        git clone https://github.com/plasmolysis369/lede-extrapackages.git packages
         cd packages
         rm -Rf *
         git rm --cache *
