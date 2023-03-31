@@ -5,22 +5,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_VERSION:=109.0.5414.74-2
+PKG_VERSION:=111.0.5563.64-1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/klzgrad/naiveproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=3c1e9e276e4ae79c8192c25a15df2f564741602ae403712565c48aa6db9d78e7
+PKG_HASH:=a5411d28943be60a273c58059e3ee81cb8e4623d8286f8e57bf5a34e4fa7e7ac
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
+PKG_BUILD_DEPENDS:=gn/host
 ifneq ($(wildcard $(TOPDIR)/feeds/packages/devel/ninja/ninja.mk),)
 PKG_BUILD_DEPENDS+= ninja/host
 endif
-PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 ifneq ($(CONFIG_CPU_TYPE)," ")
   CPU_TYPE:=$(word 1, $(subst +," ,$(CONFIG_CPU_TYPE)))
@@ -57,31 +58,22 @@ ifneq ($(CONFIG_CCACHE),)
   export naive_ccache_flags=cc_wrapper="$(CCACHE)"
 endif
 
-CLANG_VER:=16-init-8697-g60809cd2-1
+CLANG_VER:=16-init-17653-g39da55e8-2
 CLANG_FILE:=clang-llvmorg-$(CLANG_VER).tgz
 define Download/CLANG
 	URL:=https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64
 	URL_FILE:=$(CLANG_FILE)
 	FILE:=$(CLANG_FILE)
-	HASH:=5ae35f85e0d32136795c6b223bf64263d46678dd4a24fea4e9039e58a32670de
+	HASH:=b4afdf625aa4b72c5d188ed28a13dd352a881a2a4149542f0c903698d0498017
 endef
 
-GN_VER:=1c4151ff5c1d6fbf7fa800b8d4bb34d3abc03a41
-GN_FILE:=gn-git_revision-$(GN_VER).zip
-define Download/GN_TOOL
-	URL:=https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+
-	URL_FILE:=git_revision:$(GN_VER)
-	FILE:=$(GN_FILE)
-	HASH:=7195291488d08f3a10e85b85d8c4816e077015f1c5f196f770003a97aa42caf8
-endef
-
-PGO_VER:=5414-1672766927-26b17aa1745606599e619feccfe46371e879e7c4
+PGO_VER:=5563-1677886924-aa8d450a18b4f7f1cd41619f60bc5da6beb3c1d0
 PGO_FILE:=chrome-linux-$(PGO_VER).profdata
 define Download/PGO_PROF
 	URL:=https://storage.googleapis.com/chromium-optimization-profiles/pgo_profiles
 	URL_FILE:=$(PGO_FILE)
 	FILE:=$(PGO_FILE)
-	HASH:=e9a52f7a60d46fd6e682b0e908b1363faeb6f96bc2e95d5d95095b33fa67e34a
+	HASH:=eb16e7be414614c215ba90538f70f431cf444b9985865ad20d8743b707a235a6
 endef
 
 define Build/Prepare
@@ -94,8 +86,6 @@ define Build/Prepare
 		mkdir -p "third_party/llvm-build/Release+Asserts" ; \
 		$(TAR) -xzf "$(DL_DIR)/$(CLANG_FILE)" -C "third_party/llvm-build/Release+Asserts" ; \
 		echo -e "llvmorg-$(CLANG_VER)" > "third_party/llvm-build/Release+Asserts/cr_build_revision" ; \
-		mkdir -p "gn/out" ; \
-		unzip -o "$(DL_DIR)/$(GN_FILE)" -d "gn/out" ; \
 		popd ; \
 	)
 endef
@@ -106,7 +96,7 @@ define Build/Configure
 		. ../init_env.sh "$(ARCH)" $(CPU_TYPE) $(CPU_SUBTYPE) "$(TOOLCHAIN_DIR)" ; \
 		export naive_flags+=" $$$${naive_ccache_flags}" ; \
 		mkdir -p "out" ; \
-		./gn/out/gn gen "out/Release" --args="$$$${naive_flags}" --script-executable="python3" ; \
+		gn gen "out/Release" --args="$$$${naive_flags}" --script-executable="$(PYTHON)" ; \
 		popd ; \
 	)
 endef
@@ -121,7 +111,6 @@ define Package/naiveproxy/install
 endef
 
 $(eval $(call Download,CLANG))
-$(eval $(call Download,GN_TOOL))
 $(eval $(call Download,PGO_PROF))
 
 $(eval $(call BuildPackage,naiveproxy))

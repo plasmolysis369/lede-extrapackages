@@ -9,6 +9,8 @@ RULE_PROVIDER_FILE="/tmp/yaml_rule_provider.yaml"
 GAME_RULE_FILE="/tmp/yaml_game_rule.yaml"
 github_address_mod=$(uci -q get openclash.config.github_address_mod || echo 0)
 urltest_address_mod=$(uci -q get openclash.config.urltest_address_mod || echo 0)
+tolerance=$(uci -q get openclash.config.tolerance || echo 0)
+urltest_interval_mod=$(uci -q get openclash.config.urltest_interval_mod || echo 0)
 CONFIG_NAME="$5"
 
 #处理自定义规则集
@@ -813,6 +815,48 @@ yml_other_set()
       puts '${LOGTIME} Error: Edit Provider Path Failed,【' + e.message + '】';
    end;
 
+   #tolerance
+   begin
+   Thread.new{
+      if '$tolerance' != '0' then
+         Value['proxy-groups'].each{
+            |x|
+               if x['type'] == 'url-test' then
+                  x['tolerance']='${tolerance}';
+               end
+            };
+      end;
+   }.join;
+   rescue Exception => e
+      puts '${LOGTIME} Error: Edit URL-Test Group Tolerance Option Failed,【' + e.message + '】';
+   end;
+
+   #URL-Test interval
+   begin
+   Thread.new{
+      if '$urltest_interval_mod' != '0' then
+         if Value.key?('proxy-groups') then
+            Value['proxy-groups'].each{
+               |x|
+               if x['type'] == 'url-test' or x['type'] == 'fallback' or x['type'] == 'load-balance' then
+                  x['interval']='${urltest_interval_mod}';
+               end
+            };
+         end;
+         if Value.key?('proxy-providers') then
+            Value['proxy-providers'].values.each{
+               |x|
+               if x['health-check'] and x['health-check']['enable'] and x['health-check']['enable'] == 'true' then
+                  x['health-check']['interval']='${urltest_interval_mod}';
+               end;
+            };
+         end;
+      end;
+   }.join;
+   rescue Exception => e
+      puts '${LOGTIME} Error: Edit URL-Test Interval Failed,【' + e.message + '】';
+   end;
+
    #修改测速地址
    begin
    Thread.new{
@@ -820,7 +864,7 @@ yml_other_set()
          if Value.key?('proxy-providers') then
             Value['proxy-providers'].values.each{
             |x|
-            if x['health-check'] and x['health-check']['url'] and x['health-check']['url'] != '$urltest_address_mod' then
+            if x['health-check'] and x['health-check']['enable'] and x['health-check']['enable'] == 'true' then
                x['health-check']['url']='$urltest_address_mod';
             end;
             };
@@ -828,7 +872,7 @@ yml_other_set()
          if Value.key?('proxy-groups') then
             Value['proxy-groups'].each{
             |x|
-            if x['url'] and x['url'] != '$urltest_address_mod' then
+            if x['type'] == 'url-test' or x['type'] == 'fallback' or x['type'] == 'load-balance' then
                x['url']='$urltest_address_mod';
             end;
             };
@@ -836,7 +880,7 @@ yml_other_set()
       end;
    }.join;
    rescue Exception => e
-      puts '${LOGTIME} Error: Edit Speedtest URL Failed,【' + e.message + '】';
+      puts '${LOGTIME} Error: Edit URL-Test URL Failed,【' + e.message + '】';
    ensure
       File.open('$3','w') {|f| YAML.dump(Value, f)};
    end" 2>/dev/null >> $LOG_FILE
@@ -888,7 +932,7 @@ yml_other_rules_get()
    config_get "Discovery" "$section" "Discovery" "$GlobalTV"
    config_get "DAZN" "$section" "DAZN" "$GlobalTV"
    config_get "ChatGPT" "$section" "ChatGPT" "$Proxy"
-   config_get "Apple_TV" "$section" "Apple_TV" "$GlobalTV"
+   config_get "AppleTV" "$section" "AppleTV" "$GlobalTV"
 }
 
 if [ "$1" != "0" ]; then
@@ -931,7 +975,7 @@ if [ "$1" != "0" ]; then
     || [ -z "$(grep -F "$HBOGo" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Pornhub" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Apple" /tmp/Proxy_Group)" ]\
-    || [ -z "$(grep -F "$Apple_TV" /tmp/Proxy_Group)" ]\
+    || [ -z "$(grep -F "$AppleTV" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Scholar" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Netflix" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Disney" /tmp/Proxy_Group)" ]\
@@ -993,7 +1037,7 @@ if [ "$1" != "0" ]; then
             .gsub(/,Proxy$/, ',$Proxy#delete_')
             .gsub(/,YouTube$/, ',$Youtube#delete_')
             .gsub(/,Apple$/, ',$Apple#delete_')
-            .gsub(/,Apple TV$/, ',$Apple_TV#delete_')
+            .gsub(/,Apple TV$/, ',$AppleTV#delete_')
             .gsub(/,Scholar$/, ',$Scholar#delete_')
             .gsub(/,Netflix$/, ',$Netflix#delete_')
             .gsub(/,Disney$/, ',$Disney#delete_')
@@ -1024,7 +1068,7 @@ if [ "$1" != "0" ]; then
             .gsub!(/: \"Proxy\"/,': \"$Proxy#delete_\"')
             .gsub!(/: \"YouTube\"/,': \"$Youtube#delete_\"')
             .gsub!(/: \"Apple\"/,': \"$Apple#delete_\"')
-            .gsub!(/: \"Apple TV\"/,': \"$Apple_TV#delete_\"')
+            .gsub!(/: \"Apple TV\"/,': \"$AppleTV#delete_\"')
             .gsub!(/: \"Scholar\"/,': \"$Scholar#delete_\"')
             .gsub!(/: \"Netflix\"/,': \"$Netflix#delete_\"')
             .gsub!(/: \"Disney\"/,': \"$Disney#delete_\"')

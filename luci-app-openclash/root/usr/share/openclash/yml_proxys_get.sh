@@ -78,14 +78,12 @@ group_hash=$(ruby_read "$CONFIG_FILE" ".select {|x| 'proxy-groups' == x}")
 
 if [ -z "$group_hash" ]; then
 	LOG_OUT "Error: Unable To Parse Config File, Please Check And Try Again!"
-  sleep 3
   del_lock
   exit 0
 fi
 	
 if [ -z "$num" ] && [ -z "$provider_num" ]; then
    LOG_OUT "Error: Unable To Parse Config File, Please Check And Try Again!"
-   sleep 3
    del_lock
    exit 0
 fi
@@ -462,12 +460,28 @@ do
       end
    }.join
    
+   Thread.new{
+      #TFO
+      if Value['proxies'][$count].key?('tfo') then
+         tfo = '${uci_set}tfo=' + Value['proxies'][$count]['tfo'].to_s
+         system(tfo)
+      end
+   }.join
+
    if '$server_type' == 'ss' then
       Thread.new{
       #cipher
       if Value['proxies'][$count].key?('cipher') then
          cipher = '${uci_set}cipher=' + Value['proxies'][$count]['cipher'].to_s
          system(cipher)
+      end
+      }.join
+
+      Thread.new{
+      #udp-over-tcp
+      if Value['proxies'][$count].key?('udp-over-tcp') then
+         udp_over_tcp = '${uci_set}udp_over_tcp=' + Value['proxies'][$count]['udp-over-tcp'].to_s
+         system(udp_over_tcp)
       end
       }.join
       
@@ -1166,8 +1180,28 @@ do
                   system(grpc_service_name)
                end
             end
-         else
-            system '${uci_set}obfs_vless=none'
+            if Value['proxies'][$count].key?('reality-opts') then
+               if Value['proxies'][$count]['reality-opts'].key?('public-key') then
+                  reality_public_key = '${uci_set}reality_public_key=\"' + Value['proxies'][$count]['reality-opts']['public-key'].to_s + '\"'
+                  system(reality_public_key)
+               end
+               if Value['proxies'][$count]['reality-opts'].key?('short-id') then
+                  reality_short_id = '${uci_set}reality_short_id=\"' + Value['proxies'][$count]['reality-opts']['short-id'].to_s + '\"'
+                  system(reality_short_id)
+               end
+            end
+         elsif Value['proxies'][$count]['network'].to_s == 'tcp'
+            system '${uci_set}obfs_vless=tcp'
+            if Value['proxies'][$count].key?('reality-opts') then
+               if Value['proxies'][$count]['reality-opts'].key?('public-key') then
+                  reality_public_key = '${uci_set}reality_public_key=\"' + Value['proxies'][$count]['reality-opts']['public-key'].to_s + '\"'
+                  system(reality_public_key)
+               end
+               if Value['proxies'][$count]['reality-opts'].key?('short-id') then
+                  reality_short_id = '${uci_set}reality_short_id=\"' + Value['proxies'][$count]['reality-opts']['short-id'].to_s + '\"'
+                  system(reality_short_id)
+               end
+            end
          end
       end
       }.join

@@ -154,8 +154,8 @@ msgstr "关于DNS问题："
 msgid "Some browsers may have built-in DNS, be sure to close. Example: Chrome. Settings - Security and Privacy - Security - Use secure DNS disabled."
 msgstr "部分浏览器可能有内置的DNS，请务必关闭。如：chrome。 设置 - 安全和隐私设置 - 使用安全 DNS 关闭。"
 
-msgid "Sometimes after restart, you can not internet. At this time, close all browsers (important), Windows Client, please `ipconfig / flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back."
-msgstr "有时候重启后，上不了。这时请先关闭所有浏览器（重要），Windows客户端请`ipconfig/flushdns`。手机端请关闭WIFI，切一下飞行模式再切回来。"
+msgid "Sometimes after restart, you can not internet. At this time, close all browsers (important), Windows Client, please `ipconfig /flushdns`. Please close the WiFi on the phone, cut the flight mode and then cut back."
+msgstr "有时候重启后，上不了。这时请先关闭所有浏览器（重要），Windows客户端请`ipconfig /flushdns`。手机端请关闭WIFI，切一下飞行模式再切回来。"
 
 msgid "The client DNS and the default gateway must point to this router."
 msgstr "客户端DNS和默认网关必须指向本路由器。"
@@ -369,6 +369,9 @@ msgstr "证书路径"
 
 msgid "Finger Print"
 msgstr "指纹伪造"
+
+msgid "Avoid using randomized, unless you have to."
+msgstr "避免使用 randomized , 除非你必须要。"
 
 msgid "Original"
 msgstr "原版"
@@ -850,8 +853,8 @@ msgstr "从文件中加载 IP: 形如'ext:file:tag'，必须以ext:（小写）�
 msgid "Clear logs"
 msgstr "清空日志"
 
-msgid "Need node support required"
-msgstr "需要节点支持"
+msgid "Only recommend to use with VLESS-TCP-XTLS-Vision."
+msgstr "只推荐与 VLESS-TCP-XTLS-Vision 搭配使用。"
 
 msgid "Password"
 msgstr "密码"
@@ -862,8 +865,8 @@ msgstr "IV 检查"
 msgid "UDP over TCP"
 msgstr "TCP 封装 UDP"
 
-msgid "Need Xray server side with Shadowsocks-2022 protocol"
-msgstr "需要 Xray 作服务器端的 Shadowsocks-2022 协议"
+msgid "Need Xray-core or sing-box as server side."
+msgstr "需要 Xray-core 或者 sing-box 作为服务器端。"
 
 msgid "Connection Timeout"
 msgstr "连接超时时间"
@@ -873,9 +876,6 @@ msgstr "本地端口"
 
 msgid "Fast Open"
 msgstr "快速打开"
-
-msgid "Need node support required"
-msgstr "需要节点支持"
 
 msgid "plugin"
 msgstr "插件"
