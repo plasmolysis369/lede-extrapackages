@@ -16,7 +16,7 @@ env:
 jobs:
   build:
     if: github.event.repository.owner.id == github.event.sender.id
-    runs-on: Ubuntu-22.04
+    runs-on: Ubuntu-20.04
 
     name: Update ${{matrix.target}}
     strategy:
