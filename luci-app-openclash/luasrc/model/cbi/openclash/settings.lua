@@ -119,19 +119,6 @@ o:value("1", translate("Dnsmasq Redirect"))
 o:value("2", translate("Firewall Redirect"))
 
 if op_mode == "fake-ip" then
-<<<<<<< HEAD
-=======
-o = s:taboption("dns", Value, "fakeip_range", translate("Fake-ip Range (IPv4 Cidr)"))
-o.description = translate("Set Fake-ip Range (IPv4 Cidr)")
-o.datatype = "cidr4"
-o.default = "198.18.0.1/16"
-o.placeholder = "198.18.0.1/16"
-
-o = s:taboption("dns", Flag, "store_fakeip", font_red..bold_on..translate("Persistence Fake-IP")..bold_off..font_off)
-o.description = font_red..bold_on..translate("Cache Fake-IP DNS Resolution Records To File, Improve The Response Speed After Startup")..bold_off..font_off
-o.default = 1
-
->>>>>>> parent of 6bb1008 (update-02.17)
 o = s:taboption("dns", DummyValue, "flush_fakeip_cache", translate("Flush Fake-IP Cache"))
 o.template = "openclash/flush_fakeip_cache"
 end
@@ -173,250 +160,22 @@ function custom_domain_dns.write(self, section, value)
 	end
 end
 
-<<<<<<< HEAD
-=======
-custom_domain_dns_policy = s:taboption("dns", Value, "custom_domain_dns_core")
-custom_domain_dns_policy.template = "cbi/tvalue"
-custom_domain_dns_policy.description = translate("Domain Names In The List Use The Custom DNS Server, But Still Return Fake-IP Results, One rule per line")
-custom_domain_dns_policy.rows = 20
-custom_domain_dns_policy.wrap = "off"
-custom_domain_dns_policy:depends("dns_advanced_setting", "1")
-
-function custom_domain_dns_policy.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list") or ""
-end
-function custom_domain_dns_policy.write(self, section, value)
-	if value then
-		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list")
-	  if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list", value)
-		end
-	end
-end
-
--- Meta
-o = s:taboption("meta", Flag, "enable_meta_core", font_red..bold_on..translate("Enable Meta Core")..bold_off..font_off)
-o.description = font_red..bold_on..translate("Some Premium Core Features are Unavailable, For Other More Useful Functions Go Wiki:")..bold_off..font_off.." ".."<a href='javascript:void(0)' onclick='javascript:return winOpen(\"https://clashmeta.gitbook.io/meta/\")'>https://clashmeta.gitbook.io/meta/</a>"
-o.default = 0
-
-o = s:taboption("meta", Flag, "enable_tcp_concurrent", font_red..bold_on..translate("Enable Tcp Concurrent")..bold_off..font_off)
-o.description = font_red..bold_on..translate("TCP Concurrent Request IPs, Choose The Lowest Latency One To Connection")..bold_off..font_off
-o.default = 1
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", ListValue, "find_process_mode", translate("Enable Process Rule"))
-o.description = translate("Whether to Enable Process Rules, If You Are Not Sure, Please Choose off Which Useful in Router Environment")
-o:value("always")
-o:value("strict")
-o:value("off", translate("off　"))
-o.default = "off"
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", ListValue, "client_fingerprint", translate("Client Fingerprint"))
-o.description = translate("Change The Client Fingerprint, Only Support TLS Transport in TCP/GRPC/WS/HTTP For Vless/Vmess and Trojan")
-o:value("0", translate("Disable"))
-o:value("random", translate("Random"))
-o:value("chrome", translate("Chrome"))
-o:value("firefox", translate("Firefox"))
-o:value("safari", translate("Safari"))
-o:value("ios", translate("IOS"))
-o.default = "0"
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", Flag, "enable_meta_sniffer", font_red..bold_on..translate("Enable Sniffer")..bold_off..font_off)
-o.description = font_red..bold_on..translate("Sniffer Will Prevent Domain Name Proxy and DNS Hijack Failure")..bold_off..font_off
-o.default = 1
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", Flag, "enable_meta_sniffer_pure_ip", translate("Forced Sniff Pure IP"))
-o.description = translate("Forced Sniff Pure IP Connections")
-o.default = 1
-o:depends("enable_meta_sniffer", "1")
-
-o = s:taboption("meta", Flag, "enable_meta_sniffer_custom", translate("Custom Sniffer Settings"))
-o.description = translate("Custom The Force and Skip Sniffing Doamin Lists")
-o.default = 0
-o:depends("enable_meta_sniffer", "1")
-
-sniffing_domain_force = s:taboption("meta", Value, "sniffing_domain_force", translate("Force Sniffing Domains Lists"))
-sniffing_domain_force:depends("enable_meta_sniffer_custom", "1")
-sniffing_domain_force.template = "cbi/tvalue"
-sniffing_domain_force.description = translate("Will Override Dns Queries If Domains in The List")
-sniffing_domain_force.rows = 20
-sniffing_domain_force.wrap = "off"
-
-function sniffing_domain_force.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_force_sniffing_domain.yaml") or ""
-end
-function sniffing_domain_force.write(self, section, value)
-	if value then
-		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_force_sniffing_domain.yaml")
-	  if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_force_sniffing_domain.yaml", value)
-		end
-	end
-end
-
-sniffing_port_filter = s:taboption("meta", Value, "sniffing_port_filter", translate("Sniffing Ports Filter"))
-sniffing_port_filter:depends("enable_meta_sniffer_custom", "1")
-sniffing_port_filter.template = "cbi/tvalue"
-sniffing_port_filter.description = translate("Will Only Sniffing If Ports in The List")
-sniffing_port_filter.rows = 20
-sniffing_port_filter.wrap = "off"
-
-function sniffing_port_filter.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_sniffing_ports_filter.yaml") or ""
-end
-function sniffing_port_filter.write(self, section, value)
-	if value then
-		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_sniffing_ports_filter.yaml")
-	  if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_sniffing_ports_filter.yaml", value)
-		end
-	end
-end
-
-sniffing_domain_filter = s:taboption("meta", Value, "sniffing_domain_filter", translate("Force Sniffing Domains(sni) Filter"))
-sniffing_domain_filter:depends("enable_meta_sniffer_custom", "1")
-sniffing_domain_filter.template = "cbi/tvalue"
-sniffing_domain_filter.description = translate("Will Disable Sniffing If Domains(sni) in The List")
-sniffing_domain_filter.rows = 20
-sniffing_domain_filter.wrap = "off"
-
-function sniffing_domain_filter.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_sniffing_domain_filter.yaml") or ""
-end
-function sniffing_domain_filter.write(self, section, value)
-	if value then
-		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_sniffing_domain_filter.yaml")
-	  if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_sniffing_domain_filter.yaml", value)
-		end
-	end
-end
-
-o = s:taboption("meta", ListValue, "geodata_loader", translate("Geodata Loader Mode"))
-o:value("memconservative", translate("Memconservative"))
-o:value("standard", translate("Standard"))
-o.default = "memconservative"
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", Flag, "enable_geoip_dat", translate("Enable GeoIP Dat"))
-o.description = translate("Replace GEOIP MMDB With GEOIP Dat, Large Size File")..", "..font_red..bold_on..translate("Need Download First")..bold_off..font_off
-o.default = 0
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", Flag, "geoip_auto_update", translate("Auto Update GeoIP Dat"))
-o.default = 0
-o:depends("enable_geoip_dat", "1")
-
-o = s:taboption("meta", ListValue, "geoip_update_week_time", translate("Update Time (Every Week)"))
-o:value("*", translate("Every Day"))
-o:value("1", translate("Every Monday"))
-o:value("2", translate("Every Tuesday"))
-o:value("3", translate("Every Wednesday"))
-o:value("4", translate("Every Thursday"))
-o:value("5", translate("Every Friday"))
-o:value("6", translate("Every Saturday"))
-o:value("0", translate("Every Sunday"))
-o.default = "1"
-o:depends("geoip_auto_update", "1")
-
-o = s:taboption("meta", ListValue, "geoip_update_day_time", translate("Update time (every day)"))
-for t = 0,23 do
-o:value(t, t..":00")
-end
-o.default = "0"
-o:depends("geoip_auto_update", "1")
-
-o = s:taboption("meta", Value, "geoip_custom_url")
-o.title = translate("Custom GeoIP Dat URL")
-o.rmempty = true
-o.description = translate("Custom GeoIP Dat URL, Click Button Below To Refresh After Edit")
-o:value("https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat", translate("Loyalsoldier-testingcf-jsdelivr-Version")..translate("(Default)"))
-o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat", translate("Loyalsoldier-fastly-jsdelivr-Version"))
-o:value("https://ftp.jaist.ac.jp/pub/sourceforge.jp/storage/g/v/v2/v2raya/dists/v2ray-rules-dat/geoip.dat", translate("OSDN-Version")..translate("(Default)"))
-o.default = "https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
-o:depends("geoip_auto_update", "1")
-
-o = s:taboption("meta", Button, translate("GEOIP Dat Update")) 
-o.title = translate("Update GeoIP Dat")
-o.inputtitle = translate("Check And Update")
-o.inputstyle = "reload"
-o.write = function()
-  m.uci:set("openclash", "config", "enable", 1)
-  m.uci:commit("openclash")
-  SYS.call("/usr/share/openclash/openclash_geoip.sh >/dev/null 2>&1 &")
-  HTTP.redirect(DISP.build_url("admin", "services", "openclash"))
-end
-o:depends("geoip_auto_update", "1")
-
-o = s:taboption("meta", Flag, "geosite_auto_update", translate("Auto Update GeoSite Database"))
-o.default = 0
-o:depends("enable_meta_core", "1")
-
-o = s:taboption("meta", ListValue, "geosite_update_week_time", translate("Update Time (Every Week)"))
-o:value("*", translate("Every Day"))
-o:value("1", translate("Every Monday"))
-o:value("2", translate("Every Tuesday"))
-o:value("3", translate("Every Wednesday"))
-o:value("4", translate("Every Thursday"))
-o:value("5", translate("Every Friday"))
-o:value("6", translate("Every Saturday"))
-o:value("0", translate("Every Sunday"))
-o.default = "1"
-o:depends("geosite_auto_update", "1")
-
-o = s:taboption("meta", ListValue, "geosite_update_day_time", translate("Update time (every day)"))
-for t = 0,23 do
-o:value(t, t..":00")
-end
-o.default = "0"
-o:depends("geosite_auto_update", "1")
-
-o = s:taboption("meta", Value, "geosite_custom_url")
-o.title = translate("Custom GeoSite URL")
-o.rmempty = true
-o.description = translate("Custom GeoSite Data URL, Click Button Below To Refresh After Edit")
-o:value("https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat", translate("Loyalsoldier-testingcf-jsdelivr-Version")..translate("(Default)"))
-o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat", translate("Loyalsoldier-fastly-jsdelivr-Version"))
-o:value("https://ftp.jaist.ac.jp/pub/sourceforge.jp/storage/g/v/v2/v2raya/dists/v2ray-rules-dat/geosite.dat", translate("OSDN-Version")..translate("(Default)"))
-o.default = "https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
-o:depends("geosite_auto_update", "1")
-
-o = s:taboption("meta", Button, translate("GEOSITE Update")) 
-o.title = translate("Update GeoSite Database")
-o.inputtitle = translate("Check And Update")
-o.inputstyle = "reload"
-o.write = function()
-  m.uci:set("openclash", "config", "enable", 1)
-  m.uci:commit("openclash")
-  SYS.call("/usr/share/openclash/openclash_geosite.sh >/dev/null 2>&1 &")
-  HTTP.redirect(DISP.build_url("admin", "services", "openclash"))
-end
-o:depends("geosite_auto_update", "1")
-
->>>>>>> parent of 6bb1008 (update-02.17)
 ---- Access Control
 o = s:taboption("lan_ac", ListValue, "lan_ac_mode", translate("LAN Access Control Mode"))
 o:value("0", translate("Black List Mode"))
 o:value("1", translate("White List Mode"))
 o.default = "0"
 o:depends("enable_redirect_dns", "2")
-o:depends({en_mode = "redir-host", enable_redirect_dns = "1"})
-o:depends({en_mode = "redir-host-tun", enable_redirect_dns = "1"})
-o:depends({en_mode = "redir-host-mix", enable_redirect_dns = "1"})
+o:depends("en_mode", "redir-host")
+o:depends("en_mode", "redir-host-tun")
+o:depends("en_mode", "redir-host-mix")
 
 ip_b = s:taboption("lan_ac", DynamicList, "lan_ac_black_ips", translate("LAN Bypassed Host List"))
 ip_b.datatype = "ipmask"
 ip_b:depends({lan_ac_mode = "0", enable_redirect_dns = "2"})
-ip_b:depends({lan_ac_mode = "0", en_mode = "redir-host", enable_redirect_dns = "1"})
-ip_b:depends({lan_ac_mode = "0", en_mode = "redir-host-tun", enable_redirect_dns = "1"})
-ip_b:depends({lan_ac_mode = "0", en_mode = "redir-host-mix", enable_redirect_dns = "1"})
+ip_b:depends({lan_ac_mode = "0", en_mode = "redir-host"})
+ip_b:depends({lan_ac_mode = "0", en_mode = "redir-host-tun"})
+ip_b:depends({lan_ac_mode = "0", en_mode = "redir-host-mix"})
 
 mac_b = s:taboption("lan_ac", DynamicList, "lan_ac_black_macs", translate("LAN Bypassed Mac List"))
 mac_b.datatype = "list(macaddr)"
@@ -426,9 +185,9 @@ mac_b:depends("lan_ac_mode", "0")
 ip_w = s:taboption("lan_ac", DynamicList, "lan_ac_white_ips", translate("LAN Proxied Host List"))
 ip_w.datatype = "ipmask"
 ip_w:depends({lan_ac_mode = "1", enable_redirect_dns = "2"})
-ip_w:depends({lan_ac_mode = "1", en_mode = "redir-host", enable_redirect_dns = "1"})
-ip_w:depends({lan_ac_mode = "1", en_mode = "redir-host-tun", enable_redirect_dns = "1"})
-ip_w:depends({lan_ac_mode = "1", en_mode = "redir-host-mix", enable_redirect_dns = "1"})
+ip_w:depends({lan_ac_mode = "1", en_mode = "redir-host"})
+ip_w:depends({lan_ac_mode = "1", en_mode = "redir-host-tun"})
+ip_w:depends({lan_ac_mode = "1", en_mode = "redir-host-mix"})
 
 mac_w = s:taboption("lan_ac", DynamicList, "lan_ac_white_macs", translate("LAN Proxied Mac List"))
 mac_w.datatype = "list(macaddr)"
@@ -1324,7 +1083,7 @@ o.description = font_red..bold_on..translate("The Gateway and DNS of The Connect
 o.default = 0
 
 o = s:taboption("ipv6", Flag, "ipv6_dns", translate("IPv6 DNS Resolve"))
-o.description = font_red..bold_on..translate("Enable to Resolve IPv6 DNS Requests, When Using The Meta Core, Enabling This Alone is Not Valid")..bold_off..font_off
+o.description = translate("Enable to Resolve IPv6 DNS Requests")
 o.default = 0
 
 o = s:taboption("ipv6", Flag, "china_ip6_route", translate("China IPv6 Route"))

@@ -10,13 +10,7 @@ custom_name_policy=$(uci -q get openclash.config.custom_name_policy)
 custom_host=$(uci -q get openclash.config.custom_host)
 core_type=$(uci -q get openclash.config.core_type)
 enable_custom_dns=$(uci -q get openclash.config.enable_custom_dns)
-<<<<<<< HEAD
 append_wan_dns=$(uci -q get openclash.config.append_wan_dns || echo 0)
-=======
-append_wan_dns=$(uci -q get openclash.config.append_wan_dns || echo 1)
-ipv6_dns=$(uci -q get openclash.config.ipv6_dns || echo 0)
-tolerance=$(uci -q get openclash.config.tolerance || echo 0)
->>>>>>> parent of 6bb1008 (update-02.17)
 custom_fallback_filter=$(uci -q get openclash.config.custom_fallback_filter || echo 0)
 enable_meta_core=$(uci -q get openclash.config.enable_meta_core || echo 0)
 china_ip_route=$(uci -q get openclash.config.china_ip_route || echo 0)
@@ -370,18 +364,8 @@ Thread.new{
       Value['interface-name']='${24}';
    end;
    if ${19} == 1 then
-<<<<<<< HEAD
       if '${21}' != '0' then
          Value['geodata-mode']=true;
-=======
-      Value['geodata-mode']=$enable_geoip_dat;
-      Value['geodata-loader']='${22}';
-      Value['tcp-concurrent']=$enable_tcp_concurrent;
-      Value['find-process-mode']='${29}';
-   else
-      if Value.key?('geodata-mode') then
-         Value.delete('geodata-mode');
->>>>>>> parent of 6bb1008 (update-02.17)
       end;
       if '${22}' != '0' then
          Value['geodata-loader']='${22}';
@@ -395,15 +379,6 @@ Thread.new{
       if '${31}' != '0' then
          Value['global-client-fingerprint']='${31}';
       end;
-<<<<<<< HEAD
-=======
-      if Value.key?('tcp-concurrent') then
-         Value.delete('tcp-concurrent');
-      end
-      if Value.key?('find-process-mode') then
-         Value.delete('find-process-mode');
-      end
->>>>>>> parent of 6bb1008 (update-02.17)
    end;
    if not Value.key?('dns') then
       Value_1={'dns'=>{'enable'=>true}};
@@ -413,13 +388,10 @@ Thread.new{
    end;
    if ${16} == 1 then
       Value['dns']['ipv6']=true;
-<<<<<<< HEAD
       #meta core v6 DNS
       if ${19} == 1 then
          Value['ipv6']=true;
       end;
-=======
->>>>>>> parent of 6bb1008 (update-02.17)
    else
       Value['dns']['ipv6']=false;
    end;
@@ -440,21 +412,10 @@ Thread.new{
       Value_sniffer={'sniffer'=>{'enable'=>true}};
       Value['sniffer']=Value_sniffer['sniffer'];
       if '$1' == 'redir-host' then
-<<<<<<< HEAD
          Value['sniffer']['force-dns-mapping']=true;
       end;
       if ${28} == 1 then
          Value['sniffer']['parse-pure-ip']=true;
-=======
-         Value['sniffer']['ForceDnsMapping']=true;
-      else
-         Value['sniffer']['ForceDnsMapping']=false;
-      end;
-      if ${28} == 1 then
-         Value['sniffer']['ParsePureIp']=true;
-      else
-         Value['sniffer']['ParsePureIp']=false;
->>>>>>> parent of 6bb1008 (update-02.17)
       end;
       if File::exist?('/etc/openclash/custom/openclash_force_sniffing_domain.yaml') then
          if ${23} == 1 then
@@ -833,48 +794,6 @@ Thread.new{
 }.join;
 rescue Exception => e
    puts '${LOGTIME} Error: Edit Vmess Compatible Failed,【' + e.message + '】';
-end;
-
-#client-fingerprint
-begin
-Thread.new{
-   if '${31}' != '0' and ${19} == 1 then
-      if Value.key?('proxies') and not Value['proxies'].nil? then
-         Value['proxies'].each{
-         |x|
-            if x['type'] == 'vmess' or x['type'] == 'vless' or x['type'] == 'trojan' then
-               if x['client-fingerprint'] != '${31}' then
-                  x['client-fingerprint'] = '${31}';
-               end;
-            end;
-         };
-      end;
-      if Value.key?('proxy-providers') and not Value['proxy-providers'].nil? then
-         Value['proxy-providers'].values.each{
-         |x,p,v|
-            if x.key?('path') and not x['path'].empty? then
-               p = '/etc/openclash/proxy_provider/'+File.basename(x['path']);
-               if File::exist?(p) then
-                  v = YAML.load_file(p);
-                  if v.key?('proxies') and not v['proxies'].nil? then
-                     v['proxies'].each{
-                     |z|
-                        if z['type'] == 'vmess' or z['type'] == 'vless' or z['type'] == 'trojan' then
-                           if z['client-fingerprint'] != '${31}' then
-                              z['client-fingerprint'] = '${31}';
-                           end;
-                        end;
-                     };
-                  end;
-                  File.open(p,'w') {|f| YAML.dump(v, f)};
-               end;
-            end;
-         };
-      end;
-   end;
-}.join;
-rescue Exception => e
-   puts '${LOGTIME} Error: Edit Client-fingerprint Failed,【' + e.message + '】';
 ensure
    File.open('$5','w') {|f| YAML.dump(Value, f)};
 end" 2>/dev/null >> $LOG_FILE
