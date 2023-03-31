@@ -137,7 +137,7 @@ o.rawhtml = true
 o.template = "shadowsocksr/ssrurl"
 o.value = sid
 
-o = s:option(ListValue, "type", translate("Server Node Type"))
+o = s:option(Value, "type", translate("Server Node Type"))
 if is_finded("xray") or is_finded("v2ray") then
 	o:value("v2ray", translate("V2Ray/XRay"))
 end
@@ -687,7 +687,7 @@ if is_finded("xray") then
 	o:depends({type = "v2ray", v2ray_protocol = "vless", transport = "tcp", reality = true})
 
 	-- [[ uTLS ]]--
-	o = s:option(Value, "fingerprint", translate("Finger Print"))
+	o = s:option(ListValue, "fingerprint", translate("Finger Print"))
 	o:value("", translate("disable"))
 	o:value("chrome", translate("chrome"))
 	o:value("firefox", translate("firefox"))

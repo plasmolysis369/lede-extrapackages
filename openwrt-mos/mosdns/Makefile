@@ -5,7 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosdns
+<<<<<<< HEAD
 PKG_VERSION:=ac99eb1
+=======
+PKG_VERSION:=f656c64
+>>>>>>> parent of 6bb1008 (update-02.17)
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=mosdns-$(PKG_VERSION).tar.gz

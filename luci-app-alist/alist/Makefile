@@ -7,13 +7,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alist
+<<<<<<< HEAD
 PKG_VERSION:=3.15.0
 PKG_WEB_VERSION:=3.15.0
+=======
+PKG_VERSION:=3.10.1
+PKG_WEB_VERSION:=3.10.1
+>>>>>>> parent of 6bb1008 (update-02.17)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/alist-org/alist/tar.gz/v$(PKG_VERSION)?
+<<<<<<< HEAD
 PKG_HASH:=48cc8630236fe13df265d42711837e31b52620f7afd51c33d3bb71ef0ce0a84c
+=======
+PKG_HASH:=66e77f8e35af6904361a0199dc4b7c3c7cb8b6864d687a793441b3204df53358
+>>>>>>> parent of 6bb1008 (update-02.17)
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILE:=LICENSE
@@ -23,7 +32,11 @@ define Download/$(PKG_NAME)-web
   FILE:=$(PKG_NAME)-web-$(PKG_WEB_VERSION).tar.gz
   URL_FILE:=dist.tar.gz
   URL:=https://github.com/alist-org/alist-web/releases/download/$(PKG_WEB_VERSION)/
+<<<<<<< HEAD
   HASH:=1123b6bd9a4ce4b145b7cf7267cdc52ee7d1affddb82d87056427c9fd8e7abc4
+=======
+  HASH:=4d754ea380d85070deea939ab9b08f55a3d6193998694cf4ef8e1cdfc5e67722
+>>>>>>> parent of 6bb1008 (update-02.17)
 endef
 
 PKG_BUILD_DEPENDS:=golang/host

@@ -931,8 +931,11 @@ yml_other_rules_get()
    config_get "GoogleFCM" "$section" "GoogleFCM" "DIRECT"
    config_get "Discovery" "$section" "Discovery" "$GlobalTV"
    config_get "DAZN" "$section" "DAZN" "$GlobalTV"
+<<<<<<< HEAD
    config_get "ChatGPT" "$section" "ChatGPT" "$Proxy"
    config_get "AppleTV" "$section" "AppleTV" "$GlobalTV"
+=======
+>>>>>>> parent of 6bb1008 (update-02.17)
 }
 
 if [ "$1" != "0" ]; then
@@ -975,13 +978,15 @@ if [ "$1" != "0" ]; then
     || [ -z "$(grep -F "$HBOGo" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Pornhub" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Apple" /tmp/Proxy_Group)" ]\
+<<<<<<< HEAD
     || [ -z "$(grep -F "$AppleTV" /tmp/Proxy_Group)" ]\
+=======
+>>>>>>> parent of 6bb1008 (update-02.17)
     || [ -z "$(grep -F "$Scholar" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Netflix" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Disney" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Discovery" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$DAZN" /tmp/Proxy_Group)" ]\
-    || [ -z "$(grep -F "$ChatGPT" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Spotify" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$Steam" /tmp/Proxy_Group)" ]\
     || [ -z "$(grep -F "$AdBlock" /tmp/Proxy_Group)" ]\
@@ -1037,12 +1042,14 @@ if [ "$1" != "0" ]; then
             .gsub(/,Proxy$/, ',$Proxy#delete_')
             .gsub(/,YouTube$/, ',$Youtube#delete_')
             .gsub(/,Apple$/, ',$Apple#delete_')
+<<<<<<< HEAD
             .gsub(/,Apple TV$/, ',$AppleTV#delete_')
+=======
+>>>>>>> parent of 6bb1008 (update-02.17)
             .gsub(/,Scholar$/, ',$Scholar#delete_')
             .gsub(/,Netflix$/, ',$Netflix#delete_')
             .gsub(/,Disney$/, ',$Disney#delete_')
             .gsub(/,Spotify$/, ',$Spotify#delete_')
-            .gsub(/,ChatGPT$/, ',$ChatGPT#delete_')
             .gsub(/,Steam$/, ',$Steam#delete_')
             .gsub(/,AdBlock$/, ',$AdBlock#delete_')
             .gsub(/,Speedtest$/, ',$Speedtest#delete_')
@@ -1068,12 +1075,14 @@ if [ "$1" != "0" ]; then
             .gsub!(/: \"Proxy\"/,': \"$Proxy#delete_\"')
             .gsub!(/: \"YouTube\"/,': \"$Youtube#delete_\"')
             .gsub!(/: \"Apple\"/,': \"$Apple#delete_\"')
+<<<<<<< HEAD
             .gsub!(/: \"Apple TV\"/,': \"$AppleTV#delete_\"')
+=======
+>>>>>>> parent of 6bb1008 (update-02.17)
             .gsub!(/: \"Scholar\"/,': \"$Scholar#delete_\"')
             .gsub!(/: \"Netflix\"/,': \"$Netflix#delete_\"')
             .gsub!(/: \"Disney\"/,': \"$Disney#delete_\"')
             .gsub!(/: \"Spotify\"/,': \"$Spotify#delete_\"')
-            .gsub!(/: \"ChatGPT\"/,': \"$ChatGPT#delete_\"')
             .gsub!(/: \"Steam\"/,': \"$Steam#delete_\"')
             .gsub!(/: \"AdBlock\"/,': \"$AdBlock#delete_\"')
             .gsub!(/: \"Speedtest\"/,': \"$Speedtest#delete_\"')

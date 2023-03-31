@@ -26,11 +26,13 @@ ENABLED_DEFAULT_ACL=0
 ENABLED_ACLS=0
 PROXY_IPV6=0
 PROXY_IPV6_UDP=0
-LUA_UTIL_PATH=/usr/lib/lua/luci/passwall2
-UTIL_SS=$LUA_UTIL_PATH/util_shadowsocks.lua
-UTIL_XRAY=$LUA_UTIL_PATH/util_xray.lua
-UTIL_NAIVE=$LUA_UTIL_PATH/util_naiveproxy.lua
-UTIL_HYSTERIA=$LUA_UTIL_PATH/util_hysteria.lua
+LUA_API_PATH=/usr/lib/lua/luci/model/cbi/$CONFIG/api
+API_GEN_SS=$LUA_API_PATH/gen_shadowsocks.lua
+API_GEN_V2RAY=$LUA_API_PATH/gen_v2ray.lua
+API_GEN_V2RAY_DNS=$LUA_API_PATH/gen_v2ray_dns.lua
+API_GEN_V2RAY_PROTO=$LUA_API_PATH/gen_v2ray_proto.lua
+API_GEN_NAIVE=$LUA_API_PATH/gen_naiveproxy.lua
+API_GEN_HYSTERIA=$LUA_API_PATH/gen_hysteria.lua
 V2RAY_ARGS=""
 V2RAY_CONFIG=""
 
@@ -261,7 +263,7 @@ lua_api() {
 		echo "nil"
 		return
 	}
-	echo $(lua -e "local api = require 'luci.passwall2.api' print(api.${func})")
+	echo $(lua -e "local api = require 'luci.model.cbi.passwall2.api.api' print(api.${func})")
 }
 
 run_v2ray() {
@@ -272,12 +274,12 @@ run_v2ray() {
 	eval_set_val $@
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
 	if [ "$type" != "v2ray" ] && [ "$type" != "xray" ]; then
-		local bin=$(first_type $(config_t_get global_app xray_file) xray)
+		local bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
 		if [ -n "$bin" ]; then
-			type="xray"
+			type="v2ray"
 		else
-			bin=$(first_type $(config_t_get global_app v2ray_file) v2ray)
-			[ -n "$bin" ] && type="v2ray"
+			bin=$(first_type $(config_t_get global_app xray_file) xray)
+			[ -n "$bin" ] && type="xray"
 		fi
 	fi
 	[ -z "$type" ] && return 1
@@ -346,7 +348,7 @@ run_v2ray() {
 		[ -n "$direct_dns_query_strategy" ] && V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -dns_query_strategy ${direct_dns_query_strategy}"
 		[ -n "$direct_dns_client_ip" ] && V2RAY_DNS_DIRECT_ARGS="${V2RAY_DNS_DIRECT_ARGS} -dns_client_ip ${direct_dns_client_ip}"
 		
-		lua $UTIL_XRAY gen_dns_config ${V2RAY_DNS_DIRECT_ARGS} > $V2RAY_DNS_DIRECT_CONFIG
+		lua $API_GEN_V2RAY_DNS ${V2RAY_DNS_DIRECT_ARGS} > $V2RAY_DNS_DIRECT_CONFIG
 		ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $V2RAY_DNS_DIRECT_LOG run -c "$V2RAY_DNS_DIRECT_CONFIG"
 		
 		[ "$remote_dns_protocol" != "fakedns" ] && {
@@ -391,7 +393,7 @@ run_v2ray() {
 			[ -n "$remote_dns_client_ip" ] && V2RAY_DNS_REMOTE_ARGS="${V2RAY_DNS_REMOTE_ARGS} -dns_client_ip ${remote_dns_client_ip}"
 			
 			V2RAY_DNS_REMOTE_ARGS="${V2RAY_DNS_REMOTE_ARGS} -remote_dns_outbound_socks_address 127.0.0.1 -remote_dns_outbound_socks_port ${socks_port}"
-			lua $UTIL_XRAY gen_dns_config ${V2RAY_DNS_REMOTE_ARGS} > $V2RAY_DNS_REMOTE_CONFIG
+			lua $API_GEN_V2RAY_DNS ${V2RAY_DNS_REMOTE_ARGS} > $V2RAY_DNS_REMOTE_CONFIG
 			ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $V2RAY_DNS_REMOTE_LOG run -c "$V2RAY_DNS_REMOTE_CONFIG"
 		}
 		
@@ -406,7 +408,7 @@ run_v2ray() {
 		fi
 	}
 	
-	lua $UTIL_XRAY gen_config -node $node -redir_port $redir_port -tcp_proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
+	lua $API_GEN_V2RAY -node $node -redir_port $redir_port -tcp_proxy_way $tcp_proxy_way -loglevel $loglevel ${_extra_param} > $config_file
 	ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -c "$config_file"
 }
 
@@ -463,11 +465,11 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _extra_param="-local_http_port $http_port"
 		}
-		lua $UTIL_XRAY gen_config -flag SOCKS_$flag -node $node -local_socks_port $socks_port ${_extra_param} > $config_file
+		lua $API_GEN_V2RAY -flag SOCKS_$flag -node $node -local_socks_port $socks_port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app ${type}_file) ${type})" ${type} $log_file run -c "$config_file"
 	;;
 	naiveproxy)
-		lua $UTIL_NAIVE gen_config -node $node -run_type socks -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		lua $API_GEN_NAIVE -node $node -run_type socks -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
 		ln_run "$(first_type naive)" naive $log_file "$config_file"
 	;;
 	brook)
@@ -486,11 +488,11 @@ run_socks() {
 		ln_run "$(first_type $(config_t_get global_app brook_file) brook)" "brook_SOCKS_${flag}" $log_file "$protocol" --socks5 "$bind:$socks_port" -s "${server_host}:${port}${ws_path}" -p "$(config_n_get $node password)"
 	;;
 	ssr)
-		lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
 		ln_run "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v -u
 	;;
 	ss)
-		lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
+		lua $API_GEN_SS -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
 		ln_run "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
 	;;
 	ss-rust)
@@ -499,7 +501,7 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _extra_param="-local_http_port $http_port"
 		}
-		lua $UTIL_SS gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
+		lua $API_GEN_SS -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 	;;
 	hysteria)
@@ -508,7 +510,7 @@ run_socks() {
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
 			local _extra_param="-local_http_port $http_port"
 		}
-		lua $UTIL_HYSTERIA gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
+		lua $API_GEN_HYSTERIA -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 	;;
 	esac
@@ -523,7 +525,7 @@ run_socks() {
 			[ -n "$bin" ] && type="xray"
 		fi
 		[ -z "$type" ] && return 1
-		lua $UTIL_XRAY gen_proto_config -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
+		lua $API_GEN_V2RAY_PROTO -local_http_port $http_port -server_proto socks -server_address "127.0.0.1" -server_port $socks_port -server_username $_username -server_password $_password > $http_config_file
 		ln_run "$bin" ${type} /dev/null run -c "$http_config_file"
 	}
 	unset http_flag
@@ -783,6 +785,7 @@ kill_all() {
 	kill -9 $(pidof "$@") >/dev/null 2>&1
 }
 
+<<<<<<< HEAD
 acl_app() {
 	local items=$(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1)
 	[ -n "$items" ] && {
@@ -889,6 +892,19 @@ acl_app() {
 		done
 		unset redir_port dns_port dnsmasq_port
 	}
+=======
+boot() {
+	[ "$ENABLED" == 1 ] && {
+		local delay=$(config_t_get global_delay start_delay 1)
+		if [ "$delay" -gt 0 ]; then
+			echolog "执行启动延时 $delay 秒后再启动!"
+			sleep $delay && start >/dev/null 2>&1 &
+		else
+			start
+		fi
+	}
+	return 0
+>>>>>>> parent of 6bb1008 (update-02.17)
 }
 
 start() {
