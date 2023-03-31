@@ -1,31 +1,32 @@
-name: Update packages
 
 on:
-  repository_dispatch:
-  release:
-    types: published
   push:
-    branches:
-      - main
+    paths:
+      - '.github/workflows/update-packages.yml'
+      - 'diy/**'
   schedule:
     - cron: 0 */12 * * *
   watch:
     types: started
-  workflow_dispatch:
+  repository_dispatch:
 
 env:
   TZ: Asia/Shanghai
 
 jobs:
-  merge:
+  build:
+    if: github.event.repository.owner.id == github.event.sender.id
     runs-on: Ubuntu-22.04
-    if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id
+
+    name: Update ${{matrix.target}}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [main]
         
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@main
 
     - name: Initialization environment
       env:
@@ -40,16 +41,36 @@ jobs:
     - name: Clone packages
       run: |
         cd $GITHUB_WORKSPACE
-        chmod +x packages.sh
-        git clone https://github.com/plasmolysis369/lede-extrapackages.git packages
-        cd packages
-        rm -Rf *
-        git rm --cache *
-        $GITHUB_WORKSPACE/packages.sh
+        chmod +x ${{matrix.target}}.sh
+        git clone -b ${{matrix.target}} https://github.com/PurpleMoon369/lede-extrapackages.git ${{matrix.target}}
+        cd ${{matrix.target}}
+        git rm -r --cache * >/dev/null 2>&1 &
+        rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
+        $GITHUB_WORKSPACE/${{matrix.target}}.sh
+        
     - name: Upload
+      env: 
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       run: |
-        [ -e $GITHUB_WORKSPACE/README.md ] && cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/packages
-        cd $GITHUB_WORKSPACE/packages
+        [ -e $GITHUB_WORKSPACE/LICENSE ] && cp $GITHUB_WORKSPACE/LICENSE $GITHUB_WORKSPACE/${{matrix.target}}
+        [ -e $GITHUB_WORKSPACE/README.md ] && cp $GITHUB_WORKSPACE/README.md $GITHUB_WORKSPACE/${{matrix.target}}
+        cd $GITHUB_WORKSPACE/${{matrix.target}}
         git add .
-        git commit -m "update$(TZ='Asia/Shanghai' date +@%Y%m%d)"
-        git push --quiet "https://${{ secrets.TOKEN }}@github.com/plasmolysis369/lede-extrapackages.git"
+        git commit -m "update$(TZ='Asia/Shanghai' date +-%m.%d)"
+        git push --quiet "https://${{ secrets.ACCESS_TOKEN }}@github.com/PurpleMoon369/lede-extrapackages.git" HEAD:${{matrix.target}}
+        
+        
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 1
+        keep_minimum_runs: 0
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.1.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 1
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
