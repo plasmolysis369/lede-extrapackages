@@ -15,6 +15,8 @@ local require_dir = "luci.passwall2."
 local ipt_bin = sys.exec("echo -n $(/usr/share/passwall2/iptables.sh get_ipt_bin)")
 local ip6t_bin = sys.exec("echo -n $(/usr/share/passwall2/iptables.sh get_ip6t_bin)")
 
+local nft_flag = api.is_finded("fw4") and "1" or "0"
+
 local function log(...)
 	local f, err = io.open(LOG_APP_FILE, "a")
 	if f and err == nil then
@@ -29,11 +31,15 @@ local function cmd(cmd)
 end
 
 local function ipt(arg)
-	cmd(ipt_bin .. " -w " .. arg)
+	if ipt_bin and #ipt_bin > 0 then
+		cmd(ipt_bin .. " -w " .. arg)
+	end
 end
 
 local function ip6t(arg)
-	cmd(ip6t_bin .. " -w " .. arg)
+	if ip6t_bin and #ip6t_bin > 0 then
+		cmd(ip6t_bin .. " -w " .. arg)
+	end
 end
 
 local function ln_run(s, d, command, output)
@@ -47,6 +53,11 @@ end
 
 local function gen_include()
 	cmd(string.format("echo '#!/bin/sh' > /tmp/etc/%s.include", CONFIG))
+	if nft_flag == "1" then
+		cmd("echo \"\" > " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft")
+		local nft_cmd = "for chain in $(nft -a list chains |grep -E \"chain PSW2-SERVER\" |awk -F ' ' '{print$2}'); do\n nft list chain inet fw4 ${chain} >> " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft\n done"
+		cmd(nft_cmd)
+	end
 	local function extract_rules(n, a)
 		local _ipt = ipt_bin
 		if n == "6" then
@@ -59,15 +70,21 @@ local function gen_include()
 	end
 	local f, err = io.open("/tmp/etc/" .. CONFIG .. ".include", "a")
 	if f and err == nil then
-		f:write(ipt_bin .. '-save -c | grep -v "PSW2-SERVER" | ' .. ipt_bin .. '-restore -c' .. "\n")
-		f:write(ipt_bin .. '-restore -n <<-EOT' .. "\n")
-		f:write(extract_rules("4", "filter") .. "\n")
-		f:write("EOT" .. "\n")
-		f:write(ip6t_bin .. '-save -c | grep -v "PSW2-SERVER" | ' .. ip6t_bin .. '-restore -c' .. "\n")
-		f:write(ip6t_bin .. '-restore -n <<-EOT' .. "\n")
-		f:write(extract_rules("6", "filter") .. "\n")
-		f:write("EOT" .. "\n")
-		f:close()
+		if nft_flag == "0" then
+			f:write(ipt_bin .. '-save -c | grep -v "PSW2-SERVER" | ' .. ipt_bin .. '-restore -c' .. "\n")
+			f:write(ipt_bin .. '-restore -n <<-EOT' .. "\n")
+			f:write(extract_rules("4", "filter") .. "\n")
+			f:write("EOT" .. "\n")
+			f:write(ip6t_bin .. '-save -c | grep -v "PSW2-SERVER" | ' .. ip6t_bin .. '-restore -c' .. "\n")
+			f:write(ip6t_bin .. '-restore -n <<-EOT' .. "\n")
+			f:write(extract_rules("6", "filter") .. "\n")
+			f:write("EOT" .. "\n")
+			f:close()
+		else
+			f:write("nft -f " .. CONFIG_PATH .. "/" .. CONFIG .. ".nft\n")
+			f:write("nft insert rule inet fw4 input position 0 counter jump PSW2-SERVER")
+			f:close()
+		end
 	end
 end
 
@@ -78,10 +95,15 @@ local function start()
 	end
 	cmd(string.format("mkdir -p %s %s", CONFIG_PATH, TMP_BIN_PATH))
 	cmd(string.format("touch %s", LOG_APP_FILE))
-	ipt("-N PSW2-SERVER")
-	ipt("-I INPUT -j PSW2-SERVER")
-	ip6t("-N PSW2-SERVER")
-	ip6t("-I INPUT -j PSW2-SERVER")
+	if nft_flag == "0" then
+		ipt("-N PSW2-SERVER")
+		ipt("-I INPUT -j PSW2-SERVER")
+		ip6t("-N PSW2-SERVER")
+		ip6t("-I INPUT -j PSW2-SERVER")
+	else
+		cmd("nft add chain inet fw4 PSW2-SERVER\n")
+		cmd("nft insert rule inet fw4 input position 0 counter jump PSW2-SERVER")
+	end
 	uci:foreach(CONFIG, "user", function(user)
 		local id = user[".name"]
 		local enable = user.enable
@@ -126,10 +148,10 @@ local function start()
 				bin = ln_run("/usr/bin/ssserver", "ssserver", "-c " .. config_file, log_path)
 			elseif type == "V2ray" then
 				config = require(require_dir .. "util_xray").gen_config_server(user)
-				bin = ln_run(api.get_v2ray_path(), "v2ray", "run -c " .. config_file, log_path)
+				bin = ln_run(api.get_app_path("v2ray"), "v2ray", "run -c " .. config_file, log_path)
 			elseif type == "Xray" then
 				config = require(require_dir .. "util_xray").gen_config_server(user)
-				bin = ln_run(api.get_xray_path(), "xray", "run -c " .. config_file, log_path)
+				bin = ln_run(api.get_app_path("xray"), "xray", "run -c " .. config_file, log_path)
 			elseif type == "Brook" then
 				local brook_protocol = user.protocol
 				local brook_password = user.password
@@ -138,10 +160,10 @@ local function start()
 				if brook_protocol == "wsserver" and brook_path then
 					brook_path_arg = " --path " .. brook_path
 				end
-				bin = ln_run(api.get_brook_path(), "brook_" .. id, string.format("--debug %s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
+				bin = ln_run(api.get_app_path("brook"), "brook_" .. id, string.format("--debug %s -l :%s -p %s%s", brook_protocol, port, brook_password, brook_path_arg), log_path)
 			elseif type == "Hysteria" then
 				config = require(require_dir .. "util_hysteria").gen_config_server(user)
-				bin = ln_run(api.get_hysteria_path(), "hysteria", "-c " .. config_file .. " server", log_path)
+				bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)
 			end
 
 			if next(config) then
@@ -159,12 +181,19 @@ local function start()
 
 			local bind_local = user.bind_local or 0
 			if bind_local and tonumber(bind_local) ~= 1 then
-				ipt(string.format('-A PSW2-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
-				ip6t(string.format('-A PSW2-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
-				if udp_forward == 1 then
-					ipt(string.format('-A PSW2-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
-					ip6t(string.format('-A PSW2-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
-				end 
+				if nft_flag == "0" then
+					ipt(string.format('-A PSW2-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+					ip6t(string.format('-A PSW2-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+					if udp_forward == 1 then
+						ipt(string.format('-A PSW2-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+						ip6t(string.format('-A PSW2-SERVER -p udp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))
+					end
+				else
+					cmd(string.format('nft add rule inet fw4 PSW2-SERVER meta l4proto tcp tcp dport {%s} accept', port))
+					if udp_forward == 1 then
+						cmd(string.format('nft add rule inet fw4 PSW2-SERVER meta l4proto udp udp dport {%s} accept', port))
+					end
+				end
 			end
 		end
 	end)
@@ -173,12 +202,19 @@ end
 
 local function stop()
 	cmd(string.format("top -bn1 | grep -v 'grep' | grep '%s/' | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1", CONFIG_PATH))
-	ipt("-D INPUT -j PSW2-SERVER 2>/dev/null")
-	ipt("-F PSW2-SERVER 2>/dev/null")
-	ipt("-X PSW2-SERVER 2>/dev/null")
-	ip6t("-D INPUT -j PSW2-SERVER 2>/dev/null")
-	ip6t("-F PSW2-SERVER 2>/dev/null")
-	ip6t("-X PSW2-SERVER 2>/dev/null")
+	if nft_flag == "0" then
+		ipt("-D INPUT -j PSW2-SERVER 2>/dev/null")
+		ipt("-F PSW2-SERVER 2>/dev/null")
+		ipt("-X PSW2-SERVER 2>/dev/null")
+		ip6t("-D INPUT -j PSW2-SERVER 2>/dev/null")
+		ip6t("-F PSW2-SERVER 2>/dev/null")
+		ip6t("-X PSW2-SERVER 2>/dev/null")
+	else
+		local nft_cmd = "handles=$(nft -a list chain inet fw4 input | grep -E \"PSW2-SERVER\" | awk -F '# handle ' '{print$2}')\n for handle in $handles; do\n nft delete rule inet fw4 input handle ${handle} 2>/dev/null\n done"
+		cmd(nft_cmd)
+		cmd("nft flush chain inet fw4 PSW2-SERVER 2>/dev/null")
+		cmd("nft delete chain inet fw4 PSW2-SERVER 2>/dev/null")
+	end
 	cmd(string.format("rm -rf %s %s /tmp/etc/%s.include", CONFIG_PATH, LOG_APP_FILE, CONFIG))
 end
 
