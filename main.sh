@@ -22,15 +22,15 @@ git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/QiuSimons/openwrt-mos
 git clone --depth 1 https://github.com/fw876/helloworld
-git clone -b lede https://github.com/pymumu/luci-app-smartdns
-git clone https://github.com/KFERMercer/luci-app-tcpdump
-git clone https://github.com/plasmolysis369/mypackages
-git clone https://github.com/xiaorouji/openwrt-passwall
-git clone https://github.com/xiaorouji/openwrt-passwall2
-git clone https://github.com/sirpdboy/netspeedtest
-git clone https://github.com/linkease/nas-packages-luci
-git clone https://github.com/linkease/nas-packages
-git clone https://github.com/sbwml/luci-app-alist
+git clone --depth 1 -b lede https://github.com/pymumu/luci-app-smartdns
+git clone --depth 1 https://github.com/KFERMercer/luci-app-tcpdump
+git clone --depth 1 https://github.com/plasmolysis369/mypackages
+git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall2
+git clone --depth 1 https://github.com/xiaorouji/openwrt-passwall-packages
+git clone --depth 1 https://github.com/sirpdboy/netspeedtest
+git clone --depth 1 https://github.com/linkease/nas-packages-luci
+git clone --depth 1 https://github.com/linkease/nas-packages
+git clone --depth 1 https://github.com/sbwml/luci-app-alist
 
 svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
 svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
@@ -40,8 +40,7 @@ svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
 svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 
 mv -n openwrt-passwall2/* ./ ; rm -rf openwrt-passwall2
-mv -n openwrt-passwall/brook openwrt-passwall/chinadns-ng openwrt-passwall/dns2socks openwrt-passwall/ipt2socks openwrt-passwall/microsocks -t ./
-mv -n openwrt-passwall/ssocks  openwrt-passwall/pdnsd-alt openwrt-passwall/trojan-go openwrt-passwall/trojan-plus -t ./ ; rm -rf openwrt-passwall
+mv -n openwrt-passwall-packages/*  ./ ; rm -rf openwrt-passwall2
 mv -n nas-packages/network/services/ddnsto ./ ; rm -rf nas-packages
 mv -n nas-packages-luci/luci/luci-app-ddnsto ./ ; rm -rf nas-packages-luci
 mv -n helloworld/* ./ ; rm -rf helloworld
