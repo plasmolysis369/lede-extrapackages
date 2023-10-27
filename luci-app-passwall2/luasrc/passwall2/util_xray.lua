@@ -5,6 +5,7 @@ local sys = api.sys
 local jsonc = api.jsonc
 local appname = api.appname
 local fs = api.fs
+local CACHE_PATH = api.CACHE_PATH
 
 local new_port
 
@@ -508,9 +509,6 @@ function gen_config(var)
 	local node_id = var["-node"]
 	local tcp_proxy_way = var["-tcp_proxy_way"]
 	local redir_port = var["-redir_port"]
-	local sniffing = var["-sniffing"]
-	local route_only = var["-route_only"]
-	local buffer_size = var["-buffer_size"]
 	local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
 	local local_socks_port = var["-local_socks_port"]
 	local local_socks_username = var["-local_socks_username"]
@@ -523,6 +521,8 @@ function gen_config(var)
 	local dns_query_strategy = var["-dns_query_strategy"]
 	local direct_dns_udp_server = var["-direct_dns_udp_server"]
 	local direct_dns_udp_port = var["-direct_dns_udp_port"]
+	local direct_ipset = var["-direct_ipset"]
+	local direct_nftset = var["-direct_nftset"]
 	local remote_dns_udp_server = var["-remote_dns_udp_server"]
 	local remote_dns_udp_port = var["-remote_dns_udp_port"]
 	local remote_dns_fake = var["-remote_dns_fake"]
@@ -539,6 +539,10 @@ function gen_config(var)
 	local outbounds = {}
 	local routing = nil
 	local observatory = nil
+
+	local CACHE_TEXT_FILE = CACHE_PATH .. "/cache_" .. flag .. ".txt"
+
+	local xray_settings = uci:get_all(appname, "@global_xray[0]") or {}
 
 	local nodes = {}
 	if node_id then
@@ -592,7 +596,13 @@ function gen_config(var)
 			protocol = "dokodemo-door",
 			settings = {network = "tcp,udp", followRedirect = true},
 			streamSettings = {sockopt = {tproxy = "tproxy"}},
-			sniffing = {enabled = sniffing and true or false, destOverride = {"http", "tls", "quic", (remote_dns_fake) and "fakedns"}, metadataOnly = false, routeOnly = route_only and true or nil, domainsExcluded = (sniffing and not route_only) and get_domain_excluded() or nil}
+			sniffing = {
+				enabled = xray_settings.sniffing == "1" and true or false,
+				destOverride = {"http", "tls", "quic", (remote_dns_fake) and "fakedns"},
+				metadataOnly = false,
+				routeOnly = (xray_settings.sniffing == "1" and xray_settings.route_only == "1") and true or nil,
+				domainsExcluded = (xray_settings.sniffing == "1" and xray_settings.route_only == "0") and get_domain_excluded() or nil
+			}
 		}
 		local tcp_inbound = api.clone(inbound)
 		tcp_inbound.tag = "tcp_redir"
@@ -1223,6 +1233,25 @@ function gen_config(var)
 		if dns_hosts_len == 0 then
 			dns.hosts = nil
 		end
+
+		local content = flag .. node_id .. jsonc.stringify(dns)
+		if api.cacheFileCompareToLogic(CACHE_TEXT_FILE, content) == false then
+			--clear ipset/nftset
+			if direct_ipset then
+				string.gsub(direct_ipset, '[^' .. "," .. ']+', function(w)
+					sys.call("ipset -q -F " .. w)
+				end)
+			end
+			if direct_nftset then
+				string.gsub(direct_nftset, '[^' .. "," .. ']+', function(w)
+					local s = string.reverse(w)
+					local _, i = string.find(s, "#")
+					local m = string.len(s) - i + 1
+					local n = w:sub(m + 1)
+					sys.call("nft flush set inet fw4 " .. n .. " 2>/dev/null")
+				end)
+			end
+		end
 	end
 	
 	if inbounds or outbounds then
@@ -1252,7 +1281,7 @@ function gen_config(var)
 						-- connIdle = 300,
 						-- uplinkOnly = 2,
 						-- downlinkOnly = 5,
-						bufferSize = buffer_size and tonumber(buffer_size) or nil,
+						bufferSize = xray_settings.buffer_size and tonumber(xray_settings.buffer_size) or nil,
 						statsUserUplink = false,
 						statsUserDownlink = false
 					}
@@ -1409,6 +1438,7 @@ function gen_dns_config(var)
 	local remote_dns_doh_host = var["-remote_dns_doh_host"]
 	local remote_dns_doh_ip = var["-remote_dns_doh_ip"]
 	local remote_dns_doh_port = var["-remote_dns_doh_port"]
+	local remote_dns_detour = var["-remote_dns_detour"]
 	local remote_dns_outbound_socks_address = var["-remote_dns_outbound_socks_address"]
 	local remote_dns_outbound_socks_port = var["-remote_dns_outbound_socks_port"]
 	local dns_cache = var["-dns_cache"]
@@ -1439,6 +1469,41 @@ function gen_dns_config(var)
 		local other_type_dns_proto, other_type_dns_server, other_type_dns_port
 	
 		if dns_out_tag == "remote" then
+			if remote_dns_detour == "direct" then
+				dns_out_tag = "direct"
+				table.insert(outbounds, 1, {
+					tag = dns_out_tag,
+					protocol = "freedom",
+					settings = {
+						domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+					},
+					streamSettings = {
+						sockopt = {
+							mark = 255
+						}
+					}
+				})
+			else
+				if remote_dns_outbound_socks_address and remote_dns_outbound_socks_port then
+					table.insert(outbounds, 1, {
+						tag = dns_out_tag,
+						protocol = "socks",
+						streamSettings = {
+							network = "tcp",
+							security = "none"
+						},
+						settings = {
+							servers = {
+								{
+									address = remote_dns_outbound_socks_address,
+									port = tonumber(remote_dns_outbound_socks_port)
+								}
+							}
+						}
+					})
+				end
+			end
+
 			local _remote_dns = {
 				_flag = "remote"
 			}
@@ -1470,23 +1535,20 @@ function gen_dns_config(var)
 			end
 	
 			table.insert(dns.servers, _remote_dns)
+		elseif dns_out_tag == "direct" then
 			table.insert(outbounds, 1, {
-				tag = "remote",
-				protocol = "socks",
-				streamSettings = {
-					network = "tcp",
-					security = "none"
-				},
+				tag = dns_out_tag,
+				protocol = "freedom",
 				settings = {
-					servers = {
-						{
-							address = remote_dns_outbound_socks_address,
-							port = tonumber(remote_dns_outbound_socks_port)
-						}
+					domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+				},
+				streamSettings = {
+					sockopt = {
+						mark = 255
 					}
 				}
 			})
-		elseif dns_out_tag == "direct" then
+
 			local _direct_dns = {
 				_flag = "direct"
 			}
@@ -1527,19 +1589,6 @@ function gen_dns_config(var)
 			end
 	
 			table.insert(dns.servers, _direct_dns)
-	
-			table.insert(outbounds, 1, {
-				protocol = "freedom",
-				tag = "direct",
-				settings = {
-					domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
-				},
-				streamSettings = {
-					sockopt = {
-						mark = 255
-					}
-				}
-			})
 		end
 	
 		local dns_hosts_len = 0
