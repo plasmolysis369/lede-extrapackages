@@ -41,9 +41,7 @@ svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
 
 mv -n nas-packages/network/services/ddnsto ./ ; rm -rf nas-packages
 mv -n nas-packages-luci/luci/luci-app-ddnsto ./ ; rm -rf nas-packages-luci
-mv -n helloworld/* ./ ; rm -rf helloworld
-mv -n openwrt-passwall2/* ./ ; rm -rf openwrt-passwall2
-mv -n openwrt-passwall-packages/*  ./ ; rm -rf openwrt-passwall2
+
 mv -n mypackages/* ./ ; rm -rf mypackages
 
 rm -rf ./*/.git & rm -f ./*/.gitattributes
