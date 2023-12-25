@@ -82,7 +82,15 @@ if token then
 		fs.unlink(sub_path)
 	end
 end
-	
+
+---- UA
+o = s:option(Value, "sub_ua", "User-Agent")
+o.description = font_red..bold_on..translate("Used for Downloading Subscriptions, Defaults to Clash")..bold_off..font_off
+o:value("Clash")
+o:value("clash.meta")
+o.default = "Clash"
+o.rmempty = true
+
 ---- subconverter
 o = s:option(Flag, "sub_convert", translate("Subscribe Convert Online"))
 o.description = translate("Convert Subscribe Online With Template")
@@ -94,7 +102,6 @@ o.rmempty     = true
 o.description = font_red..bold_on..translate("Note: There is A Risk of Privacy Leakage in Online Convert")..bold_off..font_off
 o:depends("sub_convert", "1")
 o:value("https://api.dler.io/sub", translate("api.dler.io")..translate("(Default)"))
-o:value("https://subconverter.herokuapp.com/sub", translate("subconverter.herokuapp.com")..translate("(Default)"))
 o:value("https://v.id9.cc/sub", translate("v.id9.cc")..translate("(Support Vless By Pinyun)"))
 o:value("https://sub.id9.cc/sub", translate("sub.id9.cc"))
 o:value("https://api.wcc.best/sub", translate("api.wcc.best"))
