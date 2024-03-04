@@ -39,7 +39,8 @@ config global_xray
 	option route_only '0'
 
 config global_other
-	option nodes_ping 'auto_ping tcping'
+	option auto_detection_time 'tcping'
+	option show_node_info '0'
 
 config global_rules
 	option auto_update '0'
@@ -63,9 +64,9 @@ config global_subscribe
 config global_singbox
 	option sniff_override_destination '0'
 	option geoip_path '/usr/share/singbox/geoip.db'
-	option geoip_url 'https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db'
+	option geoip_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db'
 	option geosite_path '/usr/share/singbox/geosite.db'
-	option geosite_url 'https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db'
+	option geosite_url 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db'
 
 config nodes 'myshunt'
 	option remarks '分流总节点'
@@ -143,7 +144,7 @@ geosite:category-games@cn
 
 config shunt_rules 'ProxyGame'
 	option remarks 'ProxyGame'
-	option domain_list 'geosite:category-games@!cn
+	option domain_list 'geosite:category-games
 domain:store.steampowered.com
 '
 

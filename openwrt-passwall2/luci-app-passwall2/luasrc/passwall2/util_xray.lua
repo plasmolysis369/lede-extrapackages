@@ -43,9 +43,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		local proxy = 0
 		local proxy_tag = "nil"
+		local fragment = nil
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy = proxy_table.proxy or 0
 			proxy_tag = proxy_table.tag or "nil"
+			fragment = proxy_table.fragment or nil
 		end
 
 		if node.type == "Xray" then
@@ -127,7 +129,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 			-- 底层传输配置
 			streamSettings = (node.streamSettings or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
 				sockopt = {
-					mark = 255
+					mark = 255,
+					tcpMptcp = (node.tcpMptcp == "1") and true or nil,
+					tcpNoDelay = (node.tcpNoDelay == "1") and true or nil,
+					dialerProxy = fragment and "fragment" or nil
 				},
 				network = node.transport,
 				security = node.stream_security,
@@ -240,6 +245,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil
 			}
 		}
+
+		if node.protocol == "wireguard" then
+			result.settings.kernelMode = false
+		end
+
 		local alpn = {}
 		if node.alpn and node.alpn ~= "default" then
 			string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
@@ -420,7 +430,6 @@ function gen_config_server(node)
 						}
 					} or nil,
 					tcpSettings = (node.transport == "tcp") and {
-						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
 						header = {
 							type = node.tcp_guise,
 							request = (node.tcp_guise == "http") and {
@@ -443,7 +452,6 @@ function gen_config_server(node)
 						header = {type = node.mkcp_guise}
 					} or nil,
 					wsSettings = (node.transport == "ws") and {
-						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false,
 						headers = (node.ws_host) and {Host = node.ws_host} or nil,
 						path = node.ws_path
 					} or nil,
@@ -460,7 +468,10 @@ function gen_config_server(node)
 					} or nil,
 					grpcSettings = (node.transport == "grpc") and {
 						serviceName = node.grpc_serviceName
-					} or nil
+					} or nil,
+					sockopt = {
+						acceptProxyProtocol = (node.acceptProxyProtocol and node.acceptProxyProtocol == "1") and true or false
+					}
 				}
 			}
 		},
@@ -493,9 +504,7 @@ function gen_config_server(node)
 					node.reality_serverNames
 				},
 				privateKey = node.reality_private_key,
-				shortIds = {
-					node.reality_shortId
-				}
+				shortIds = node.reality_shortId or ""
 			} or nil
 		end
 	end
@@ -507,6 +516,8 @@ function gen_config(var)
 	local flag = var["-flag"]
 	local loglevel = var["-loglevel"] or "warning"
 	local node_id = var["-node"]
+	local server_host = var["-server_host"]
+	local server_port = var["-server_port"]
 	local tcp_proxy_way = var["-tcp_proxy_way"]
 	local redir_port = var["-redir_port"]
 	local local_socks_address = var["-local_socks_address"] or "0.0.0.0"
@@ -518,21 +529,18 @@ function gen_config(var)
 	local local_http_username = var["-local_http_username"]
 	local local_http_password = var["-local_http_password"]
 	local dns_listen_port = var["-dns_listen_port"]
-	local dns_query_strategy = var["-dns_query_strategy"]
 	local direct_dns_udp_server = var["-direct_dns_udp_server"]
 	local direct_dns_udp_port = var["-direct_dns_udp_port"]
+	local direct_dns_query_strategy = var["-direct_dns_query_strategy"]
 	local direct_ipset = var["-direct_ipset"]
 	local direct_nftset = var["-direct_nftset"]
 	local remote_dns_udp_server = var["-remote_dns_udp_server"]
 	local remote_dns_udp_port = var["-remote_dns_udp_port"]
 	local remote_dns_fake = var["-remote_dns_fake"]
-	local remote_dns_fake_strategy = var["-remote_dns_fake_strategy"]
+	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local dns_cache = var["-dns_cache"]
 
-	local dns_direct_domains = {}
-	local dns_direct_expectIPs = {}
-	local dns_remote_domains = {}
-	local dns_remote_expectIPs = {}
+	local dns_domain_rules = {}
 	local dns = nil
 	local fakedns = nil
 	local inbounds = {}
@@ -554,6 +562,7 @@ function gen_config(var)
 
 	if local_socks_port then
 		local inbound = {
+			tag = "socks-in",
 			listen = local_socks_address,
 			port = tonumber(local_socks_port),
 			protocol = "socks",
@@ -637,7 +646,7 @@ function gen_config(var)
 			end
 			if is_new_blc_node then
 				local blc_node = uci:get_all(appname, blc_node_id)
-				local outbound = gen_outbound(flag, blc_node, blc_node_tag)
+				local outbound = gen_outbound(flag, blc_node, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil })
 				if outbound then
 					table.insert(outbounds, outbound)
 					valid_nodes[#valid_nodes + 1] = blc_node_tag
@@ -653,7 +662,7 @@ function gen_config(var)
 				selector = valid_nodes,
 				strategy = { type = _node.balancingStrategy or "random" }
 			}
-			if _node.balancingStrategy == "leastPing" then
+			if _node.balancingStrategy == "leastPing" or _node.balancingStrategy == "leastLoad" then
 				if not observatory then
 					observatory = {
 						subjectSelector = { "blc-" },
@@ -680,7 +689,39 @@ function gen_config(var)
 		return balancer, rule
 	end
 
+	local function set_outbound_detour(node, outbound, outbounds_table, shunt_rule_name)
+		if not node or not outbound or not outbounds_table then return nil end
+		local default_outTag = outbound.tag
+
+		if node.to_node then
+			local to_node = uci:get_all(appname, node.to_node)
+			if to_node then
+				local to_outbound = gen_outbound(nil, to_node)
+				if to_outbound then
+					if shunt_rule_name then
+						to_outbound.tag = outbound.tag
+						outbound.tag = node[".name"]
+					else
+						to_outbound.tag = outbound.tag .. " -> " .. to_outbound.tag
+					end
+
+					to_outbound.proxySettings = {
+						tag = outbound.tag,
+						transportLayer = true
+					}
+					table.insert(outbounds_table, to_outbound)
+					default_outTag = to_outbound.tag
+				end
+			end
+		end
+		return default_outTag
+	end
+
 	for k, v in pairs(nodes) do
+		if server_host and server_port then
+			v.address = server_host
+			v.port = server_port
+		end
 		local node = v
 		if node.protocol == "_shunt" then
 			local rules = {}
@@ -711,8 +752,9 @@ function gen_config(var)
 					preproxy_enabled = false
 				end
 			elseif preproxy_node and api.is_normal_node(preproxy_node) then
-				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag)
+				local preproxy_outbound = gen_outbound(flag, preproxy_node, preproxy_tag, { fragment = xray_settings.fragment == "1" or nil })
 				if preproxy_outbound then
+					set_outbound_detour(preproxy_node, preproxy_outbound, outbounds, preproxy_tag)
 					table.insert(outbounds, preproxy_outbound)
 				else
 					preproxy_enabled = false
@@ -728,7 +770,7 @@ function gen_config(var)
 				end
 			end
 
-			local function gen_shunt_node(rule_name, _node_id, as_proxy)
+			local function gen_shunt_node(rule_name, _node_id)
 				if not rule_name then return nil, nil end
 				if not _node_id then _node_id = node[rule_name] or "nil" end
 				local rule_outboundTag
@@ -813,8 +855,16 @@ function gen_config(var)
 									})
 								end
 							end
-							local _outbound = gen_outbound(flag, _node, rule_name, { proxy = proxy and 1 or 0, tag = proxy and preproxy_tag or nil })
+							local proxy_table = {
+								proxy = proxy and 1 or 0,
+								tag = proxy and preproxy_tag or nil
+							}
+							if xray_settings.fragment == "1" and not proxy_table.tag then
+								proxy_table.fragment = true
+							end
+							local _outbound = gen_outbound(flag, _node, rule_name, proxy_table)
 							if _outbound then
+								set_outbound_detour(_node, _outbound, outbounds, rule_name)
 								table.insert(outbounds, _outbound)
 								if proxy then preproxy_used = true end
 								rule_outboundTag = rule_name
@@ -874,32 +924,42 @@ function gen_config(var)
 							table.insert(protocols, w)
 						end)
 					end
+					local inboundTag = nil
+					if e["inbound"] and e["inbound"] ~= "" then
+						inboundTag = {}
+						if e["inbound"]:find("tproxy") then
+							if redir_port then
+								table.insert(inboundTag, "tcp_redir")
+								table.insert(inboundTag, "udp_redir")
+							end
+						end
+						if e["inbound"]:find("socks") then
+							if local_socks_port then
+								table.insert(inboundTag, "socks-in")
+							end
+						end
+					end
 					local domains = nil
 					if e.domain_list then
+						local domain_table = {
+							shunt_rule_name = e[".name"],
+							outboundTag = outboundTag,
+							domain = {},
+						}
 						domains = {}
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
 							table.insert(domains, w)
-							if outboundTag == "direct" then
-								table.insert(dns_direct_domains, w)
-							else
-								if outboundTag ~= "nil" then
-									table.insert(dns_remote_domains, w)
-								end
-							end
+							table.insert(domain_table.domain, w)
 						end)
+						if outboundTag and outboundTag ~= "nil" then
+							table.insert(dns_domain_rules, api.clone(domain_table))
+						end
 					end
 					local ip = nil
 					if e.ip_list then
 						ip = {}
 						string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
 							table.insert(ip, w)
-							if outboundTag == "direct" then
-								table.insert(dns_direct_expectIPs, w)
-							else
-								if outboundTag ~= "nil" then
-									table.insert(dns_remote_expectIPs, w)
-								end
-							end
 						end)
 					end
 					local source = nil
@@ -912,6 +972,7 @@ function gen_config(var)
 					local rule = {
 						_flag = e.remarks,
 						type = "field",
+						inboundTag = inboundTag,
 						outboundTag = outboundTag,
 						balancerTag = balancerTag,
 						network = e["network"] or "tcp,udp",
@@ -964,39 +1025,39 @@ function gen_config(var)
 					}
 				}
 			end
-		else
-			local outbound = nil
-			if node.protocol == "_iface" then
-				if node.iface then
-					outbound = {
-						protocol = "freedom",
-						tag = "outbound",
-						streamSettings = {
-							sockopt = {
-								mark = 255,
-								interface = node.iface
-							}
+		elseif node.protocol == "_iface" then
+			if node.iface then
+				local outbound = {
+					protocol = "freedom",
+					tag = "outbound",
+					streamSettings = {
+						sockopt = {
+							mark = 255,
+							interface = node.iface
 						}
 					}
-					sys.call("touch /tmp/etc/passwall2/iface/" .. node.iface)
-				end
-			else
-				outbound = gen_outbound(flag, node)
+				}
+				table.insert(outbounds, outbound)
+				sys.call("touch /tmp/etc/passwall2/iface/" .. node.iface)
 			end
-			if outbound then table.insert(outbounds, outbound) end
-			routing = {
-				domainStrategy = "AsIs",
-				domainMatcher = "hybrid",
-				rules = {}
-			}
-			table.insert(routing.rules, {
-				_flag = "default",
-				type = "field",
-				outboundTag = node_id,
-				network = "tcp,udp"
-			})
+		else
+			local outbound = gen_outbound(flag, node, nil, { fragment = xray_settings.fragment == "1" or nil })
+			if outbound then
+				local default_outTag = set_outbound_detour(node, outbound, outbounds)
+				table.insert(outbounds, outbound)
+				routing = {
+					domainStrategy = "AsIs",
+					domainMatcher = "hybrid",
+					rules = {}
+				}
+				table.insert(routing.rules, {
+					_flag = "default",
+					type = "field",
+					outboundTag = default_outTag,
+					network = "tcp,udp"
+				})
+			end
 		end
-
 	end
 	
 	if remote_dns_udp_server then
@@ -1017,7 +1078,7 @@ function gen_config(var)
 			disableFallback = true,
 			disableFallbackIfMatch = true,
 			servers = {},
-			queryStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIP"
+			queryStrategy = "UseIP"
 		}
 	
 		local dns_host = ""
@@ -1044,16 +1105,14 @@ function gen_config(var)
 			end)
 		end
 	
+		local _remote_dns = nil
 		if remote_dns_udp_server then
-			local _remote_dns = {
+			_remote_dns = {
 				_flag = "remote",
 				address = remote_dns_udp_server,
-				port = tonumber(remote_dns_udp_port) or 53
+				port = tonumber(remote_dns_udp_port) or 53,
+				queryStrategy = (remote_dns_query_strategy and remote_dns_query_strategy ~= "") and remote_dns_query_strategy or "UseIPv4"
 			}
-			if not remote_dns_fake then
-				_remote_dns.domains = #dns_remote_domains > 0 and dns_remote_domains or nil
-				--_remote_dns.expectIPs = #dns_remote_expectIPs > 0 and dns_remote_expectIPs or nil
-			end
 			_remote_dns_proto = "udp"
 			table.insert(dns.servers, _remote_dns)
 
@@ -1063,10 +1122,11 @@ function gen_config(var)
 					remote_dns_udp_server
 				},
 				port = tonumber(remote_dns_udp_port) or 53,
-				network = "udp",
+				network = _remote_dns_proto,
 				outboundTag = "direct"
 			})
 		end
+		local _remote_fakedns = nil
 		if remote_dns_fake then
 			fakedns = {}
 			local fakedns4 = {
@@ -1077,49 +1137,51 @@ function gen_config(var)
 				ipPool = "fc00::/18",
 				poolSize = 65535
 			}
-			if remote_dns_fake_strategy == "UseIP" then
+			if remote_dns_query_strategy == "UseIP" then
 				table.insert(fakedns, fakedns4)
 				table.insert(fakedns, fakedns6)
-			elseif remote_dns_fake_strategy == "UseIPv4" then
+			elseif remote_dns_query_strategy == "UseIPv4" then
 				table.insert(fakedns, fakedns4)
-			elseif remote_dns_fake_strategy == "UseIPv6" then
+			elseif remote_dns_query_strategy == "UseIPv6" then
 				table.insert(fakedns, fakedns6)
 			end
-			local _remote_dns = {
+			_remote_fakedns = {
 				_flag = "remote_fakedns",
 				address = "fakedns",
-				domains = #dns_remote_domains > 0 and dns_remote_domains or nil
-				--expectIPs = #dns_remote_expectIPs > 0 and dns_remote_expectIPs or nil
 			}
-			table.insert(dns.servers, _remote_dns)
+			table.insert(dns.servers, _remote_fakedns)
 		end
 	
-		if true then
+		local _direct_dns = nil
+		if direct_dns_udp_server then
+			local domain = {}
 			local nodes_domain_text = sys.exec('uci show passwall2 | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 			string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)
-				table.insert(dns_direct_domains, "full:" .. w)
+				table.insert(domain, "full:" .. w)
 			end)
-	
-			local _direct_dns = {
-				_flag = "direct",
-				domains = #dns_direct_domains > 0 and dns_direct_domains or nil
-				--expectIPs = #dns_direct_expectIPs > 0 and dns_direct_expectIPs or nil
-			}
-	
-			if direct_dns_udp_server then
-				_direct_dns.address = direct_dns_udp_server
-				_direct_dns.port = tonumber(direct_dns_udp_port) or 53
-				table.insert(routing.rules, 1, {
-					type = "field",
-					ip = {
-						direct_dns_udp_server
-					},
-					port = tonumber(direct_dns_udp_port) or 53,
-					network = "udp",
-					outboundTag = "direct"
+			if #domain > 0 then
+				table.insert(dns_domain_rules, 1, {
+					outboundTag = "direct",
+					domain = domain
 				})
 			end
-	
+
+			_direct_dns = {
+				_flag = "direct",
+				address = direct_dns_udp_server,
+				port = tonumber(direct_dns_udp_port) or 53,
+				queryStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP",
+			}
+			table.insert(routing.rules, 1, {
+				type = "field",
+				ip = {
+					direct_dns_udp_server
+				},
+				port = tonumber(direct_dns_udp_port) or 53,
+				network = "udp",
+				outboundTag = "direct"
+			})
+
 			table.insert(dns.servers, _direct_dns)
 		end
 	
@@ -1151,7 +1213,7 @@ function gen_config(var)
 					address = remote_dns_udp_server,
 					port = tonumber(remote_dns_udp_port) or 53,
 					network = _remote_dns_proto or "tcp",
-					nonIPQuery = "skip"
+					nonIPQuery = "drop"
 				},
 				proxySettings = {
 					tag = "direct"
@@ -1194,13 +1256,40 @@ function gen_config(var)
 					dns_servers = {
 						_flag = "default",
 						address = value.address,
-						port = value.port
+						port = value.port,
+						queryStrategy = value.queryStrategy
 					}
 					break
 				end
 			end
 			if dns_servers then
 				table.insert(dns.servers, 1, dns_servers)
+			end
+
+			--按分流顺序DNS
+			if dns_domain_rules and #dns_domain_rules > 0 then
+				for index, value in ipairs(dns_domain_rules) do
+					if value.outboundTag and value.domain then
+						local dns_server = nil
+						if value.outboundTag == "direct" then
+							dns_server = api.clone(_direct_dns)
+						else
+							if remote_dns_fake then
+								dns_server = api.clone(_remote_fakedns)
+							else
+								dns_server = api.clone(_remote_dns)
+							end
+						end
+						dns_server.domains = value.domain
+						if value.shunt_rule_name then
+							dns_server["_flag"] = value.shunt_rule_name
+						end
+
+						if dns_server then
+							table.insert(dns.servers, dns_server)
+						end
+					end
+				end
 			end
 
 			for i = #dns.servers, 1, -1 do
@@ -1234,7 +1323,7 @@ function gen_config(var)
 			dns.hosts = nil
 		end
 
-		local content = flag .. node_id .. jsonc.stringify(dns)
+		local content = flag .. node_id .. jsonc.stringify(routing.rules)
 		if api.cacheFileCompareToLogic(CACHE_TEXT_FILE, content) == false then
 			--clear ipset/nftset
 			if direct_ipset then
@@ -1244,11 +1333,14 @@ function gen_config(var)
 			end
 			if direct_nftset then
 				string.gsub(direct_nftset, '[^' .. "," .. ']+', function(w)
-					local s = string.reverse(w)
-					local _, i = string.find(s, "#")
-					local m = string.len(s) - i + 1
-					local n = w:sub(m + 1)
-					sys.call("nft flush set inet fw4 " .. n .. " 2>/dev/null")
+					local split = api.split(w, "#")
+					if #split > 3 then
+						local ip_type = split[1]
+						local family = split[2]
+						local table_name = split[3]
+						local set_name = split[4]
+						sys.call(string.format("nft flush set %s %s %s 2>/dev/null", family, table_name, set_name))
+					end
 				end)
 			end
 		end
@@ -1292,11 +1384,33 @@ function gen_config(var)
 				-- }
 			}
 		}
+		
+		if xray_settings.fragment == "1" then
+			table.insert(outbounds, {
+				protocol = "freedom",
+				tag = "fragment",
+				settings = {
+					domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP",
+					fragments = {
+						packets = (xray_settings.fragment_packets and xray_settings.fragment_packets ~= "") and xray_settings.fragment_packets,
+						length = (xray_settings.fragment_length and xray_settings.fragment_length ~= "") and xray_settings.fragment_length,
+						interval = (xray_settings.fragment_interval and xray_settings.fragment_interval ~= "") and xray_settings.fragment_interval
+					}
+				},
+				streamSettings = {
+					sockopt = {
+						mark = 255,
+						tcpNoDelay = true
+					}
+				}
+			})		
+		end
+		
 		table.insert(outbounds, {
 			protocol = "freedom",
 			tag = "direct",
 			settings = {
-				domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+				domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
 			},
 			streamSettings = {
 				sockopt = {
@@ -1419,7 +1533,6 @@ end
 
 function gen_dns_config(var)
 	local dns_listen_port = var["-dns_listen_port"]
-	local dns_query_strategy = var["-dns_query_strategy"]
 	local dns_out_tag = var["-dns_out_tag"]
 	local dns_client_ip = var["-dns_client_ip"]
 	local direct_dns_udp_server = var["-direct_dns_udp_server"]
@@ -1430,6 +1543,7 @@ function gen_dns_config(var)
 	local direct_dns_doh_host = var["-direct_dns_doh_host"]
 	local direct_dns_doh_ip = var["-direct_dns_doh_ip"]
 	local direct_dns_doh_port = var["-direct_dns_doh_port"]
+	local direct_dns_query_strategy = var["-direct_dns_query_strategy"]
 	local remote_dns_udp_server = var["-remote_dns_udp_server"]
 	local remote_dns_udp_port = var["-remote_dns_udp_port"]
 	local remote_dns_tcp_server = var["-remote_dns_tcp_server"]
@@ -1438,6 +1552,7 @@ function gen_dns_config(var)
 	local remote_dns_doh_host = var["-remote_dns_doh_host"]
 	local remote_dns_doh_ip = var["-remote_dns_doh_ip"]
 	local remote_dns_doh_port = var["-remote_dns_doh_port"]
+	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local remote_dns_detour = var["-remote_dns_detour"]
 	local remote_dns_outbound_socks_address = var["-remote_dns_outbound_socks_address"]
 	local remote_dns_outbound_socks_port = var["-remote_dns_outbound_socks_port"]
@@ -1463,19 +1578,19 @@ function gen_dns_config(var)
 			disableFallbackIfMatch = true,
 			servers = {},
 			clientIp = (dns_client_ip and dns_client_ip ~= "") and dns_client_ip or nil,
-			queryStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
 		}
 	
 		local other_type_dns_proto, other_type_dns_server, other_type_dns_port
 	
 		if dns_out_tag == "remote" then
+			dns.queryStrategy = (remote_dns_query_strategy and remote_dns_query_strategy ~= "") and remote_dns_query_strategy or "UseIPv4"
 			if remote_dns_detour == "direct" then
 				dns_out_tag = "direct"
 				table.insert(outbounds, 1, {
 					tag = dns_out_tag,
 					protocol = "freedom",
 					settings = {
-						domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+						domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
 					},
 					streamSettings = {
 						sockopt = {
@@ -1536,11 +1651,12 @@ function gen_dns_config(var)
 	
 			table.insert(dns.servers, _remote_dns)
 		elseif dns_out_tag == "direct" then
+			dns.queryStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
 			table.insert(outbounds, 1, {
 				tag = dns_out_tag,
 				protocol = "freedom",
 				settings = {
-					domainStrategy = (dns_query_strategy and dns_query_strategy ~= "") and dns_query_strategy or "UseIPv4"
+					domainStrategy = dns.queryStrategy
 				},
 				streamSettings = {
 					sockopt = {
@@ -1607,7 +1723,7 @@ function gen_dns_config(var)
 			tag = "dns-in",
 			settings = {
 				address = other_type_dns_server or "1.1.1.1",
-				port = 53,
+				port = other_type_dns_port or 53,
 				network = "tcp,udp"
 			}
 		})
@@ -1622,7 +1738,7 @@ function gen_dns_config(var)
 				address = other_type_dns_server or "1.1.1.1",
 				port = other_type_dns_port or 53,
 				network = other_type_dns_proto or "tcp",
-				nonIPQuery = "skip"
+				nonIPQuery = "drop"
 			}
 		})
 	

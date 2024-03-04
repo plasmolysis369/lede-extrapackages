@@ -129,6 +129,7 @@ o.validate = function(self, value, t)
 end
 o:depends({ [option_name("protocol")] = "vmess" })
 o:depends({ [option_name("protocol")] = "vless" })
+o:depends({ [option_name("protocol")] = "http" })
 o:depends({ [option_name("protocol")] = "socks" })
 o:depends({ [option_name("protocol")] = "shadowsocks" })
 o:depends({ [option_name("protocol")] = "trojan" })
@@ -141,7 +142,7 @@ o:depends({ [option_name("tls")] = true })
 o = s:option(Value, option_name("reality_private_key"), translate("Private Key"))
 o:depends({ [option_name("reality")] = true })
 
-o = s:option(Value, option_name("reality_shortId"), translate("Short Id"))
+o = s:option(DynamicList, option_name("reality_shortId"), translate("Short Id"))
 o:depends({ [option_name("reality")] = true })
 
 o = s:option(Value, option_name("reality_dest"), translate("Dest"))
@@ -299,8 +300,7 @@ o = s:option(Value, option_name("grpc_serviceName"), "ServiceName")
 o:depends({ [option_name("transport")] = "grpc" })
 
 o = s:option(Flag, option_name("acceptProxyProtocol"), translate("acceptProxyProtocol"), translate("Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."))
-o:depends({ [option_name("transport")] = "tcp" })
-o:depends({ [option_name("transport")] = "ws" })
+o.default = "0"
 
 -- [[ Fallback部分 ]]--
 o = s:option(Flag, option_name("fallback"), translate("Fallback"))
@@ -345,7 +345,7 @@ o = s:option(ListValue, option_name("outbound_node"), translate("outbound node")
 o:value("nil", translate("Close"))
 o:value("_socks", translate("Custom Socks"))
 o:value("_http", translate("Custom HTTP"))
-o:value("_iface", translate("Custom Interface") .. " (Only Support Xray)")
+o:value("_iface", translate("Custom Interface"))
 for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 o.default = "nil"
 

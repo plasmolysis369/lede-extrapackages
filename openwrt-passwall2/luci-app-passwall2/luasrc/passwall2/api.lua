@@ -106,6 +106,29 @@ function trim(s)
 	return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
+-- 分割字符串
+function split(full, sep)
+	if full then
+		full = full:gsub("%z", "") -- 这里不是很清楚 有时候结尾带个\0
+		local off, result = 1, {}
+		while true do
+			local nStart, nEnd = full:find(sep, off)
+			if not nEnd then
+				local res = string.sub(full, off, string.len(full))
+				if #res > 0 then -- 过滤掉 \0
+					table.insert(result, res)
+				end
+				break
+			else
+				table.insert(result, string.sub(full, off, nStart - 1))
+				off = nEnd + 1
+			end
+		end
+		return result
+	end
+	return {}
+end
+
 function is_exist(table, value)
 	for index, k in ipairs(table) do
 		if k == value then
@@ -269,7 +292,7 @@ function get_domain_from_url(url)
 end
 
 function get_valid_nodes()
-	local nodes_ping = uci_get_type("global_other", "nodes_ping") or ""
+	local show_node_info = uci_get_type("global_other", "show_node_info") or "0"
 	local nodes = {}
 	uci:foreach(appname, "nodes", function(e)
 		e.id = e[".name"]
@@ -296,7 +319,7 @@ function get_valid_nodes()
 					end
 					if is_ipv6(address) then address = get_ipv6_full(address) end
 					e["remark"] = "%s：[%s]" % {type, e.remarks}
-					if nodes_ping:find("info") then
+					if show_node_info == "1" then
 						e["remark"] = "%s：[%s] %s:%s" % {type, e.remarks, address, e.port}
 					end
 					e.node_type = "normal"
