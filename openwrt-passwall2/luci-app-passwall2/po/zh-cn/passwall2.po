@@ -91,6 +91,12 @@ msgstr "路由器本机代理"
 msgid "When selected, localhost can transparent proxy."
 msgstr "当勾选时，路由器本机可以透明代理。"
 
+msgid "Client Proxy"
+msgstr "客户端代理"
+
+msgid "When selected, devices in LAN can transparent proxy. Otherwise, it will not be proxy. But you can still use access control to allow the designated device to proxy."
+msgstr "当勾选时，局域网内的设备可以透明代理。否则，将不代理。但您仍然可以使用访问控制允许指定的设备代理。"
+
 msgid "Socks Config"
 msgstr "Socks配置"
 
@@ -160,8 +166,14 @@ msgstr "需要代理的分流规则域名使用 FakeDNS。"
 msgid "Domain Override"
 msgstr "域名重写"
 
-msgid "Clear IPSET"
-msgstr "清空 IPSET"
+msgid "Direct DNS result write to IPSet"
+msgstr "直连 DNS 解析结果写入到 IPSet"
+
+msgid "Perform the matching direct domain name rules into IP to IPSet/NFTSet, and then connect directly (not entering the core). Maybe conflict with some special circumstances."
+msgstr "将匹配到的直连规则的域名解析IP写入到 IPSet/NFTSet，然后直连（不进入内核）。可能和某些特殊情况冲突。"
+
+msgid "Clear IPSet"
+msgstr "清空 IPSet"
 
 msgid "Try this feature if the rule modification does not take effect."
 msgstr "如果修改规则后没有生效，请尝试此功能。"
