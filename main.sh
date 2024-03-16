@@ -34,6 +34,9 @@ git clone --depth 1 https://github.com/vernesong/OpenClash && mv -n OpenClash/lu
 git clone --depth 1 https://github.com/Ysurac/openmptcprouter-feeds && mv -n openmptcprouter-feeds/luci-app-iperf ./; rm -rf openmptcprouter-feeds
 git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-atmaterial_new litte/luci-theme-mcat litte/luci-theme-tomato ./; rm -rf litte
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
+git clone --depth 1 https://github.com/sbwml/luci-app-mentohust && mv -n luci-app-mentohust/luci-app-mentohust ./luci-app-mentohust233; rm -rf luci-app-mentohust
+git clone --depth 1 https://github.com/ximiTech/luci-app-msd_lite
+git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/msd_lite ./; rm -rf packages
 
 mv -n nas-packages/network/services ./ ; rm -rf nas-packages
 mv -n nas-packages-luci/luci ./ ; rm -rf nas-packages-luci
