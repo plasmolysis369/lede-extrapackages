@@ -36,7 +36,6 @@ git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-a
 git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
 git clone --depth 1 https://github.com/sbwml/luci-app-mentohust && mv -n luci-app-mentohust/luci-app-mentohust ./luci-app-mentohust233; rm -rf luci-app-mentohust
 git clone --depth 1 https://github.com/ximiTech/luci-app-msd_lite
-git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/msd_lite ./; rm -rf packages
 
 mv -n nas-packages/network/services/ddnsto ./ ; rm -rf nas-packages
 mv -n nas-packages-luci/luci/luci-app-ddnsto ./ ; rm -rf nas-packages-luci
