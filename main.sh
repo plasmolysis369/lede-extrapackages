@@ -30,16 +30,13 @@ git clone --depth 1 https://github.com/sirpdboy/netspeedtest
 git clone --depth 1 https://github.com/linkease/nas-packages-luci
 git clone --depth 1 https://github.com/linkease/nas-packages
 git clone --depth 1 https://github.com/sbwml/luci-app-alist
+git clone --depth 1 https://github.com/vernesong/OpenClash && mv -n OpenClash/luci-app-openclash ./; rm -rf OpenClash
+git clone --depth 1 https://github.com/Ysurac/openmptcprouter-feeds && mv -n openmptcprouter-feeds/luci-app-iperf ./; rm -rf openmptcprouter-feeds
+git clone --depth 1 https://github.com/kenzok8/litte && mv -n litte/luci-theme-atmaterial_new litte/luci-theme-mcat litte/luci-theme-tomato ./; rm -rf litte
+git clone --depth 1 https://github.com/sbilly/netmaker-openwrt && mv -n netmaker-openwrt/netmaker ./; rm -rf netmaker-openwrt
 
-svn co https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
-svn co https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
-svn co https://github.com/kenzok8/litte/trunk/luci-theme-atmaterial_new
-svn co https://github.com/kenzok8/litte/trunk/luci-theme-mcat
-svn co https://github.com/kenzok8/litte/trunk/luci-theme-tomato
-svn co https://github.com/sbilly/netmaker-openwrt/trunk/netmaker
-
-mv -n nas-packages/network/services/ddnsto ./ ; rm -rf nas-packages
-mv -n nas-packages-luci/luci/luci-app-ddnsto ./ ; rm -rf nas-packages-luci
+mv -n nas-packages/network/services ./ ; rm -rf nas-packages
+mv -n nas-packages-luci/luci ./ ; rm -rf nas-packages-luci
 
 mv -n mypackages/* ./ ; rm -rf mypackages
 
