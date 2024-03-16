@@ -38,8 +38,8 @@ git clone --depth 1 https://github.com/sbwml/luci-app-mentohust && mv -n luci-ap
 git clone --depth 1 https://github.com/ximiTech/luci-app-msd_lite
 git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/msd_lite ./; rm -rf packages
 
-mv -n nas-packages/network/services ./ ; rm -rf nas-packages
-mv -n nas-packages-luci/luci ./ ; rm -rf nas-packages-luci
+mv -n nas-packages/network/services/ddnsto ./ ; rm -rf nas-packages
+mv -n nas-packages-luci/luci/luci-app-ddnsto ./ ; rm -rf nas-packages-luci
 
 mv -n mypackages/* ./ ; rm -rf mypackages
 
