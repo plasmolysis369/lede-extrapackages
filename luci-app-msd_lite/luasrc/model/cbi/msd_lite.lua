@@ -23,10 +23,13 @@ o = s:option(DynamicList, "address", translate("Bind address"))
 o.datatype = "list(ipaddrport(1))"
 o.rmempty = false
 
-o = s:option(ListValue, "interface", translate("Source interface"))
-local interfaces = luci.sys.exec("ls -l /sys/class/net/ 2>/dev/null |awk '{print $9}' 2>/dev/null")
-for interface in string.gmatch(interfaces, "%S+") do
-   o:value(interface)
+o = s:option(ListValue, "network", translate("Source interface"))
+local x = luci.model.uci.cursor()
+local net = x:get_all("network")
+for interface, config in pairs(net) do
+    if interface ~= "loopback" and config.proto ~= nil then
+        o:value(interface)
+    end
 end
 o:value("", translate("Disable"))
 o.default = ""
@@ -35,7 +38,7 @@ o.description = translate("For multicast receive.")
 o = s:option(Value, "threads", translate("Worker threads"))
 o.datatype = "uinteger"
 o.default = "0"
-o.description = translate("0 = auto")
+o.description = translate("0 = auto.")
 
 o = s:option(Flag, "bind_to_cpu", translate("Bind threads to CPUs"))
 o.default = o.disabled
@@ -61,5 +64,10 @@ o = s:option(Value, "multicast_recv_timeout", translate("Receive timeout"))
 o.datatype = "uinteger"
 o.default = "2"
 o.description = translate("Multicast receive timeout.")
+
+o = s:option(Value, "rejoin_time", translate("IGMP/MLD rejoin time"))
+o.datatype = "uinteger"
+o.default = "0"
+o.description = translate("Do IGMP/MLD leave+join every X seconds. Leave <em>0</em> to disable.")
 
 return m
