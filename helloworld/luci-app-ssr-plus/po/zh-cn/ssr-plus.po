@@ -942,8 +942,20 @@ msgstr "写入缓冲区大小"
 msgid "Congestion"
 msgstr "拥塞控制"
 
+msgid "Enabled Kernel virtual NIC TUN(optional)"
+msgstr "启用内核的虚拟网卡 TUN（可选）"
+
+msgid "Virtual NIC TUN of Linux kernel can be used only when system supports and have root permission. If used, IPv6 routing table 1023 is occupied."
+msgstr "需要系统支持且有 root 权限才能使用 Linux 内核的虚拟网卡 TUN，使用后会占用 IPv6 的 1023 号路由表。"
+
 msgid "Local addresses"
 msgstr "本地地址"
+
+msgid "Reserved bytes(optional)"
+msgstr "保留字节（可选）"
+
+msgid "Wireguard reserved bytes."
+msgstr "Wireguard 保留字节。"
 
 msgid "Private key"
 msgstr "私钥"
@@ -953,6 +965,15 @@ msgstr "节点公钥"
 
 msgid "Pre-shared key"
 msgstr "预共享密钥"
+
+msgid "Default value 0 indicatesno heartbeat."
+msgstr "默认为 0 表示无心跳。"
+
+msgid "allowedIPs(optional)"
+msgstr "allowedIPs（可选）"
+
+msgid "Wireguard allows only traffic from specific source IP."
+msgstr "Wireguard 仅允许特定源 IP 的流量。"
 
 msgid "Network interface to use"
 msgstr "使用的网络接口"
@@ -1028,6 +1049,9 @@ msgstr "接收窗口（无需确认即可接收的最大字节数：默认8Mb）
 
 msgid "Dual-stack Listening Socket"
 msgstr "双栈Socket监听"
+
+msgid "If this option is not set, the socket behavior is platform dependent."
+msgstr "如果未设置此选项，则套接字行为依赖于平台。"
 
 msgid "Maximum packet size the socks5 server can receive from external"
 msgstr "socks5服务器可以从外部接收的最大数据包大小（单位：字节）"
