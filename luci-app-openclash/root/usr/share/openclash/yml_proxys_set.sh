@@ -246,6 +246,7 @@ yml_servers_set()
    config_get "vless_flow" "$section" "vless_flow" ""
    config_get "http_headers" "$section" "http_headers" ""
    config_get "hysteria_protocol" "$section" "hysteria_protocol" ""
+   config_get "hysteria2_protocol" "$section" "hysteria2_protocol" ""
    config_get "hysteria_up" "$section" "hysteria_up" ""
    config_get "hysteria_down" "$section" "hysteria_down" ""
    config_get "hysteria_alpn" "$section" "hysteria_alpn" ""
@@ -977,6 +978,21 @@ EOF
       if [ -n "$fingerprint" ]; then
 cat >> "$SERVER_FILE" <<-EOF
     fingerprint: "$fingerprint"
+EOF
+      fi
+      if [ -n "$ports" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    ports: $ports
+EOF
+      fi
+     if [ -n "$hysteria2_protocol" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    protocol: $hysteria2_protocol
+EOF
+      fi
+      if [ -n "$hop_interval" ]; then
+cat >> "$SERVER_FILE" <<-EOF
+    hop-interval: $hop_interval
 EOF
       fi
    fi
@@ -1840,11 +1856,6 @@ cat >> "$SERVER_FILE" <<-EOF
       - REJECT
       - DIRECT
       - Proxy
-  - name: Anti IP
-    type: select
-    proxies:
-      - DIRECT
-      - Proxy
 EOF
 cat /tmp/Proxy_Server >> $SERVER_FILE 2>/dev/null
 if [ -f "/tmp/Proxy_Provider" ]; then
@@ -1982,7 +1993,6 @@ ${uci_set}Spotify="Spotify"
 ${uci_set}Steam="Steam"
 ${uci_set}miHoYo="miHoYo"
 ${uci_set}AdBlock="AdBlock"
-${uci_set}AntiIP="Anti IP"
 ${uci_set}Speedtest="Speedtest"
 ${uci_set}Telegram="Telegram"
 ${uci_set}Crypto="Crypto"
@@ -2020,7 +2030,6 @@ ${uci_set}Others="Others"
   ${UCI_DEL_LIST}="Discord" >/dev/null 2>&1 && ${UCI_ADD_LIST}="Discord" >/dev/null 2>&1
 	${UCI_DEL_LIST}="PayPal" >/dev/null 2>&1 && ${UCI_ADD_LIST}="PayPal" >/dev/null 2>&1
 	${UCI_DEL_LIST}="Speedtest" >/dev/null 2>&1 && ${UCI_ADD_LIST}="Speedtest" >/dev/null 2>&1
-  ${UCI_DEL_LIST}="Anti IP" >/dev/null 2>&1 && ${UCI_ADD_LIST}="Anti IP" >/dev/null 2>&1
   ${UCI_DEL_LIST}="Others" >/dev/null 2>&1 && ${UCI_ADD_LIST}="Others" >/dev/null 2>&1
 }
 elif [ "$rule_sources" = "ConnersHua_return" ] && [ "$servers_if_update" != "1" ] && [ -z "$if_game_proxy" ]; then
