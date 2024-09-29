@@ -202,14 +202,15 @@ check_port_exists() {
 }
 
 check_depends() {
+	local depends
 	local tables=${1}
 	if [ "$tables" == "iptables" ]; then
 		for depends in "iptables-mod-tproxy" "iptables-mod-socket" "iptables-mod-iprange" "iptables-mod-conntrack-extra" "kmod-ipt-nat"; do
-			[ -z "$(opkg status ${depends} 2>/dev/null | grep 'Status' | awk -F ': ' '{print $2}' 2>/dev/null)" ] && echolog "$tables透明代理基础依赖 $depends 未安装..."
+			[ -s "/usr/lib/opkg/info/${depends}.control" ] || echolog "$tables透明代理基础依赖 $depends 未安装..."
 		done
 	else
 		for depends in "kmod-nft-socket" "kmod-nft-tproxy" "kmod-nft-nat"; do
-			[ -z "$(opkg status ${depends} 2>/dev/null | grep 'Status' | awk -F ': ' '{print $2}' 2>/dev/null)" ] && echolog "$tables透明代理基础依赖 $depends 未安装..."
+			[ -s "/usr/lib/opkg/info/${depends}.control" ] || echolog "$tables透明代理基础依赖 $depends 未安装..."
 		done
 	fi
 }
@@ -285,7 +286,7 @@ lua_api() {
 
 run_xray() {
 	local flag node redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy dns_cache write_ipset_direct
+	local dns_listen_port direct_dns_query_strategy remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy dns_cache write_ipset_direct
 	local loglevel log_file config_file
 	local _extra_param=""
 	eval_set_val $@
@@ -326,7 +327,7 @@ run_xray() {
 				set_flag=$(echo ${flag} | awk -F '_' '{print $2}')
 			}
 			if [ "${nftflag}" = "1" ]; then
-				local direct_nftset="4#inet#fw4#passwall2_${set_flag}_whitelist,6#inet#fw4#passwall2_${set_flag}_whitelist6"
+				local direct_nftset="4#inet#passwall2#passwall2_${set_flag}_whitelist,6#inet#passwall2#passwall2_${set_flag}_whitelist6"
 			else
 				local direct_ipset="passwall2_${set_flag}_whitelist,passwall2_${set_flag}_whitelist6"
 			fi
@@ -336,7 +337,7 @@ run_xray() {
 			[ -n "${direct_ipset}" ] && _extra_param="${_extra_param} -direct_ipset ${direct_ipset}"
 			[ -n "${direct_nftset}" ] && _extra_param="${_extra_param} -direct_nftset ${direct_nftset}"
 		}
-		_extra_param="${_extra_param} -direct_dns_udp_port ${DIRECT_DNS_UDP_PORT} -direct_dns_udp_server ${DIRECT_DNS_UDP_SERVER} -direct_dns_query_strategy UseIP"
+		_extra_param="${_extra_param} -direct_dns_udp_port ${DIRECT_DNS_UDP_PORT} -direct_dns_udp_server ${DIRECT_DNS_UDP_SERVER} -direct_dns_query_strategy ${direct_dns_query_strategy}"
 		
 		DNS_REMOTE_ARGS=""
 		case "$remote_dns_protocol" in
@@ -393,7 +394,7 @@ run_xray() {
 
 run_singbox() {
 	local flag node redir_port socks_address socks_port socks_username socks_password http_address http_port http_username http_password
-	local dns_listen_port remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_detour remote_fakedns remote_dns_query_strategy dns_cache write_ipset_direct
+	local dns_listen_port direct_dns_query_strategy remote_dns_protocol remote_dns_udp_server remote_dns_tcp_server remote_dns_doh remote_dns_detour remote_fakedns remote_dns_query_strategy dns_cache write_ipset_direct
 	local loglevel log_file config_file
 	local _extra_param=""
 	eval_set_val $@
@@ -438,7 +439,7 @@ run_singbox() {
 				set_flag=$(echo ${flag} | awk -F '_' '{print $2}')
 			}
 			if [ "${nftflag}" = "1" ]; then
-				local direct_nftset="4#inet#fw4#passwall2_${set_flag}_whitelist,6#inet#fw4#passwall2_${set_flag}_whitelist6"
+				local direct_nftset="4#inet#passwall2#passwall2_${set_flag}_whitelist,6#inet#passwall2#passwall2_${set_flag}_whitelist6"
 			else
 				local direct_ipset="passwall2_${set_flag}_whitelist,passwall2_${set_flag}_whitelist6"
 			fi
@@ -448,7 +449,7 @@ run_singbox() {
 			[ -n "${direct_ipset}" ] && _extra_param="${_extra_param} -direct_ipset ${direct_ipset}"
 			[ -n "${direct_nftset}" ] && _extra_param="${_extra_param} -direct_nftset ${direct_nftset}"
 		}
-		_extra_param="${_extra_param} -direct_dns_udp_port ${DIRECT_DNS_UDP_PORT} -direct_dns_udp_server ${DIRECT_DNS_UDP_SERVER} -direct_dns_query_strategy UseIP"
+		_extra_param="${_extra_param} -direct_dns_udp_port ${DIRECT_DNS_UDP_PORT} -direct_dns_udp_server ${DIRECT_DNS_UDP_SERVER} -direct_dns_query_strategy ${direct_dns_query_strategy}"
 
 		case "$remote_dns_protocol" in
 			udp)
@@ -540,7 +541,7 @@ run_socks() {
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		[ -n "$relay_port" ] && _extra_param="${_extra_param} -server_host $server_host -server_port $port"
 		[ "${log_file}" != "/dev/null" ] && {
@@ -548,17 +549,17 @@ run_socks() {
 			[ "$loglevel" = "warning" ] && loglevel="warn"
 			_extra_param="${_extra_param} -log 1 -loglevel $loglevel -logfile $log_file"
 		}
-		lua $UTIL_SINGBOX gen_config -flag SOCKS_$flag -node $node -local_socks_port $socks_port ${_extra_param} > $config_file
+		lua $UTIL_SINGBOX gen_config -flag SOCKS_$flag -node $node -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app singbox_file) sing-box)" "sing-box" /dev/null run -c "$config_file"
 	;;
 	xray)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
 		[ -n "$relay_port" ] && _extra_param="${_extra_param} -server_host $server_host -server_port $port"
-		lua $UTIL_XRAY gen_config -flag SOCKS_$flag -node $node -local_socks_port $socks_port ${_extra_param} > $config_file
+		lua $UTIL_XRAY gen_config -flag SOCKS_$flag -node $node -local_socks_address $bind -local_socks_port $socks_port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app xray_file) xray)" "xray" $log_file run -c "$config_file"
 	;;
 	naiveproxy)
@@ -566,29 +567,29 @@ run_socks() {
 		ln_run "$(first_type naive)" naive $log_file "$config_file"
 	;;
 	ssr)
-		lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port > $config_file
+		lua $UTIL_SS gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port > $config_file
 		ln_run "$(first_type ssr-local)" "ssr-local" $log_file -c "$config_file" -v -u
 	;;
 	ss)
-		lua $UTIL_SS gen_config -node $node -local_addr "0.0.0.0" -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
+		lua $UTIL_SS gen_config -node $node -local_addr $bind -local_port $socks_port -server_host $server_host -server_port $port -mode tcp_and_udp > $config_file
 		ln_run "$(first_type ss-local)" "ss-local" $log_file -c "$config_file" -v
 	;;
 	ss-rust)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
-		lua $UTIL_SS gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
+		lua $UTIL_SS gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type sslocal)" "sslocal" $log_file -c "$config_file" -v
 	;;
 	hysteria2)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file=$(echo $config_file | sed "s/SOCKS/HTTP_SOCKS/g")
-			local _extra_param="-local_http_port $http_port"
+			local _extra_param="-local_http_address $bind -local_http_port $http_port"
 		}
-		lua $UTIL_HYSTERIA2 gen_config -node $node -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
+		lua $UTIL_HYSTERIA2 gen_config -node $node -local_socks_address $bind -local_socks_port $socks_port -server_host $server_host -server_port $port ${_extra_param} > $config_file
 		ln_run "$(first_type $(config_t_get global_app hysteria_file))" "hysteria" $log_file -c "$config_file" client
 	;;
 	tuic)
@@ -627,6 +628,9 @@ socks_node_switch() {
 			cmd=$(cat ${TMP_SCRIPT_FUNC_PATH}/${filename})
 			[ -n "$(echo $cmd | grep "${flag}")" ] && rm -f ${TMP_SCRIPT_FUNC_PATH}/${filename}
 		done
+		local bind_local=$(config_n_get $flag bind_local 0)
+		local bind="0.0.0.0"
+		[ "$bind_local" = "1" ] && bind="127.0.0.1"
 		local port=$(config_n_get $flag port)
 		local config_file="SOCKS_${flag}.json"
 		local log_file="SOCKS_${flag}.log"
@@ -635,7 +639,7 @@ socks_node_switch() {
 		local http_port=$(config_n_get $flag http_port 0)
 		local http_config_file="HTTP2SOCKS_${flag}.json"
 		LOG_FILE="/dev/null"
-		run_socks flag=$flag node=$new_node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+		run_socks flag=$flag node=$new_node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 		echo $new_node > $TMP_ID_PATH/socks_${flag}
 	}
 }
@@ -652,7 +656,7 @@ run_global() {
 		PROXY_IPV6_UDP=1
 	fi
 	V2RAY_ARGS="flag=global node=$NODE redir_port=$REDIR_PORT"
-	V2RAY_ARGS="${V2RAY_ARGS} dns_listen_port=${TUN_DNS_PORT} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY} dns_cache=${DNS_CACHE}"
+	V2RAY_ARGS="${V2RAY_ARGS} dns_listen_port=${TUN_DNS_PORT} direct_dns_query_strategy=${DIRECT_DNS_QUERY_STRATEGY} remote_dns_query_strategy=${REMOTE_DNS_QUERY_STRATEGY} dns_cache=${DNS_CACHE}"
 	local msg="${TUN_DNS} （直连DNS：${AUTO_DNS}"
 
 	[ -n "$REMOTE_DNS_PROTOCOL" ] && {
@@ -692,7 +696,10 @@ run_global() {
 	V2RAY_ARGS="${V2RAY_ARGS} log_file=${V2RAY_LOG} config_file=${V2RAY_CONFIG}"
 
 	node_socks_port=$(config_t_get global node_socks_port 1070)
-	V2RAY_ARGS="${V2RAY_ARGS} socks_port=${node_socks_port}"
+	node_socks_bind_local=$(config_t_get global node_socks_bind_local 1)
+	node_socks_bind="127.0.0.1"
+	[ "${node_socks_bind_local}" != "1" ] && node_socks_bind="0.0.0.0"
+	V2RAY_ARGS="${V2RAY_ARGS} socks_address=${node_socks_bind} socks_port=${node_socks_port}"
 	echo "127.0.0.1:$node_socks_port" > $TMP_ACL_PATH/default/SOCKS_server
 
 	node_http_port=$(config_t_get global node_http_port 0)
@@ -722,6 +729,9 @@ start_socks() {
 				[ "$enabled" == "0" ] && continue
 				local node=$(config_n_get $id node nil)
 				[ "$node" == "nil" ] && continue
+				local bind_local=$(config_n_get $id bind_local 0)
+				local bind="0.0.0.0"
+				[ "$bind_local" = "1" ] && bind="127.0.0.1"
 				local port=$(config_n_get $id port)
 				local config_file="SOCKS_${id}.json"
 				local log_file="SOCKS_${id}.log"
@@ -729,7 +739,7 @@ start_socks() {
 				[ "$log" == "0" ] && log_file=""
 				local http_port=$(config_n_get $id http_port 0)
 				local http_config_file="HTTP2SOCKS_${id}.json"
-				run_socks flag=$id node=$node bind=0.0.0.0 socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+				run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 				echo $node > $TMP_ID_PATH/socks_${id}
 
 				#自动切换逻辑
@@ -749,19 +759,36 @@ clean_log() {
 }
 
 clean_crontab() {
+	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && return
 	touch /etc/crontabs/root
 	#sed -i "/${CONFIG}/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "/etc/init.d/${CONFIG}" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "lua ${APP_PATH}/rule_update.lua log" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "lua ${APP_PATH}/subscribe.lua start" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
+
+	pgrep -af "${CONFIG}/" | awk '/tasks\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
+	rm -rf /tmp/lock/${CONFIG}_tasks.lock
 }
 
 start_crontab() {
+	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
+		start_daemon=$(config_t_get global_delay start_daemon 0)
+		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
+	fi
+
+	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && {
+		rm -rf "/tmp/lock/${CONFIG}_cron.lock"
+		echolog "当前为计划任务自动运行，不重新配置定时任务。"
+		return
+	}
+
 	clean_crontab
+
 	[ "$ENABLED" != 1 ] && {
 		/etc/init.d/cron restart
 		return
 	}
+
 	auto_on=$(config_t_get global_delay auto_on 0)
 	if [ "$auto_on" = "1" ]; then
 		time_off=$(config_t_get global_delay time_off)
@@ -787,7 +814,11 @@ start_crontab() {
 	if [ "$autoupdate" = "1" ]; then
 		local t="0 $dayupdate * * $weekupdate"
 		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		echo "$t lua $APP_PATH/rule_update.lua log > /dev/null 2>&1 &" >>/etc/crontabs/root
+		if [ "$weekupdate" = "8" ]; then
+			update_loop=1
+		else
+			echo "$t lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+		fi
 		echolog "配置定时任务：自动更新规则。"
 	fi
 
@@ -808,17 +839,23 @@ start_crontab() {
 		for name in $(ls ${TMP_SUB_PATH}); do
 			week_update=$(echo $name | awk -F '_' '{print $1}')
 			time_update=$(echo $name | awk -F '_' '{print $2}')
+			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
 			local t="0 $time_update * * $week_update"
 			[ "$week_update" = "7" ] && t="0 $time_update * * *"
-			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
-			echo "$t lua $APP_PATH/subscribe.lua start $cfgids > /dev/null 2>&1 &" >>/etc/crontabs/root
+			if [ "$week_update" = "8" ]; then
+				update_loop=1
+			else
+				echo "$t lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			fi
 		done
 		rm -rf $TMP_SUB_PATH
 	}
 
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
-		start_daemon=$(config_t_get global_delay start_daemon 0)
-		[ "$start_daemon" = "1" ] && $APP_PATH/monitor.sh > /dev/null 2>&1 &
+		[ "$update_loop" = "1" ] && {
+			$APP_PATH/tasks.sh > /dev/null 2>&1 &
+			echolog "自动更新：启动循环更新进程。"
+		}
 	else
 		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
 	fi
@@ -827,6 +864,7 @@ start_crontab() {
 }
 
 stop_crontab() {
+	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && return
 	clean_crontab
 	/etc/init.d/cron restart
 	#echolog "清除定时执行命令。"
@@ -908,13 +946,13 @@ acl_app() {
 		dnsmasq_port=11400
 		for item in $items; do
 			index=$(expr $index + 1)
-			local enabled sid remarks sources node remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy
-			local _ip _mac _iprange _ipset _ip_or_mac rule_list config_file
+			local enabled sid remarks sources node direct_dns_query_strategy remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy interface use_interface
+			local _ip _mac _iprange _ipset _ip_or_mac rule_list interface_list config_file
 			sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
 			[ "$enabled" = "1" ] || continue
 
-			[ -z "${sources}" ] && continue
+			[ -z "${sources}" ] && [ -z "${interface}" ] && continue
 			for s in $sources; do
 				is_iprange=$(lua_api "iprange(\"${s}\")")
 				if [ "${is_iprange}" = "true" ]; then
@@ -930,13 +968,19 @@ acl_app() {
 					fi
 				fi
 			done
-			[ -z "${rule_list}" ] && continue
+			for i in $interface; do
+				interface_list="${interface_list}\n$i"
+			done
+			[ -z "${rule_list}" ] && [ -z "${interface_list}" ] && continue
 			mkdir -p $TMP_ACL_PATH/$sid
-			echo -e "${rule_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/rule_list
+			
+			[ ! -z "${rule_list}" ] && echo -e "${rule_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/rule_list
+			[ ! -z "${interface_list}" ] && echo -e "${interface_list}" | sed '/^$/d' > $TMP_ACL_PATH/$sid/interface_list
 
 			tcp_proxy_mode="global"
 			udp_proxy_mode="global"
 			node=${node:-default}
+			direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
 			remote_dns_protocol=${remote_dns_protocol:-tcp}
 			remote_dns=${remote_dns:-1.1.1.1}
 			[ "$remote_dns_protocol" = "doh" ] && remote_dns=${remote_dns_doh:-https://1.1.1.1/dns-query}
@@ -971,7 +1015,7 @@ acl_app() {
 								elif [ "${type}" = "sing-box" ] && [ -n "${SINGBOX_BIN}" ]; then
 									run_func="run_singbox"
 								fi
-								${run_func} flag=acl_$sid node=$node redir_port=$redir_port socks_address=127.0.0.1 socks_port=$acl_socks_port dns_listen_port=${dns_port} direct_dns_query_strategy=UseIP remote_dns_protocol=${remote_dns_protocol} remote_dns_tcp_server=${remote_dns} remote_dns_udp_server=${remote_dns} remote_dns_doh="${remote_dns}" remote_dns_client_ip=${remote_dns_client_ip} remote_dns_detour=${remote_dns_detour} remote_fakedns=${remote_fakedns} remote_dns_query_strategy=${remote_dns_query_strategy} write_ipset_direct=${write_ipset_direct} config_file=${config_file}
+								${run_func} flag=acl_$sid node=$node redir_port=$redir_port socks_address=127.0.0.1 socks_port=$acl_socks_port dns_listen_port=${dns_port} direct_dns_query_strategy=${direct_dns_query_strategy} remote_dns_protocol=${remote_dns_protocol} remote_dns_tcp_server=${remote_dns} remote_dns_udp_server=${remote_dns} remote_dns_doh="${remote_dns}" remote_dns_client_ip=${remote_dns_client_ip} remote_dns_detour=${remote_dns_detour} remote_fakedns=${remote_fakedns} remote_dns_query_strategy=${remote_dns_query_strategy} write_ipset_direct=${write_ipset_direct} config_file=${config_file}
 							fi
 							dnsmasq_port=$(get_new_port $(expr $dnsmasq_port + 1))
 							redirect_dns_port=$dnsmasq_port
@@ -1002,8 +1046,8 @@ acl_app() {
 				echo "${redir_port}" > $TMP_ACL_PATH/$sid/var_port
 			}
 			[ -n "$redirect_dns_port" ] && echo "${redirect_dns_port}" > $TMP_ACL_PATH/$sid/var_redirect_dns_port
-			unset enabled sid remarks sources node remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy
-			unset _ip _mac _iprange _ipset _ip_or_mac rule_list config_file
+			unset enabled sid remarks sources interface node direct_dns_query_strategy remote_dns_protocol remote_dns remote_dns_doh remote_dns_client_ip remote_dns_detour remote_fakedns remote_dns_query_strategy 
+			unset _ip _mac _iprange _ipset _ip_or_mac rule_list config_file interface_list
 			unset redirect_dns_port
 		done
 		unset redir_port dns_port dnsmasq_port
@@ -1075,7 +1119,7 @@ stop() {
 	delete_ip2route
 	kill_all v2ray-plugin obfs-local
 	pgrep -f "sleep.*(6s|9s|58s)" | xargs kill -9 >/dev/null 2>&1
-	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua/{print $1}' | xargs kill -9 >/dev/null 2>&1
+	pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
 	unset V2RAY_LOCATION_ASSET
 	unset XRAY_LOCATION_ASSET
 	stop_crontab
@@ -1109,6 +1153,7 @@ TCP_PROXY_MODE="global"
 UDP_PROXY_MODE="global"
 LOCALHOST_PROXY=$(config_t_get global localhost_proxy '1')
 CLIENT_PROXY=$(config_t_get global client_proxy '1')
+DIRECT_DNS_QUERY_STRATEGY=$(config_t_get global direct_dns_query_strategy UseIP)
 REMOTE_DNS_PROTOCOL=$(config_t_get global remote_dns_protocol tcp)
 REMOTE_DNS_DETOUR=$(config_t_get global remote_dns_detour remote)
 REMOTE_DNS=$(config_t_get global remote_dns 1.1.1.1:53 | sed 's/#/:/g' | sed -E 's/\:([^:]+)$/#\1/g')
